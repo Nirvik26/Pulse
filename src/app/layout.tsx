@@ -8,8 +8,21 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Pulse - Modern Project Management",
-  description: "A powerful project management platform built with Next.js",
+  title: "Pulse — High-Velocity Engineering Workspace & AI Copilot",
+  description:
+    "An AI-powered project intelligence platform with interactive Kanban boards, ⌘K spotlight palette, Pomodoro deep work timers, and sprint velocity analytics.",
+  keywords: [
+    "Project Management",
+    "Kanban",
+    "Next.js 14",
+    "TypeScript",
+    "AI Copilot",
+    "SaaS",
+    "Productivity",
+    "Prisma",
+  ],
+  authors: [{ name: "Nirvik" }],
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({

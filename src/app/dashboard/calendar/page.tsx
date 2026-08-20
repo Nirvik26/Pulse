@@ -13,7 +13,8 @@ interface Task {
   dueDate: string;
   priority: string;
   status: string;
-  project: { name: string; color: string };
+  projectId?: string;
+  project: { id?: string; name: string; color: string };
 }
 
 export default function CalendarPage() {
@@ -138,7 +139,7 @@ export default function CalendarPage() {
                   </div>
                   <div className="space-y-1">
                     {dayTasks.slice(0, 3).map((task) => (
-                      <Link key={task.id} href={`/dashboard/projects/${task.project.name}`}>
+                      <Link key={task.id} href={`/dashboard/projects/${(task as any).projectId || task.project?.id || ""}`}>
                         <div
                           className="text-xs p-1 rounded truncate hover:bg-secondary"
                           style={{ borderLeft: `3px solid ${task.project.color}` }}

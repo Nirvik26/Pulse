@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -17,7 +18,10 @@ import {
   Bell,
   Plus,
   Activity,
+  Sparkles,
+  Command,
 } from "lucide-react";
+import { PulseMark } from "./pulse-mark";
 
 interface SidebarProps {
   projects: Array<{
@@ -42,7 +46,7 @@ export function Sidebar({ projects }: SidebarProps) {
       label: "All Projects",
       icon: FolderKanban,
       href: "/dashboard/projects",
-      active: pathname === "/dashboard/projects",
+      active: pathname.startsWith("/dashboard/projects"),
     },
     {
       label: "Calendar",
@@ -51,7 +55,7 @@ export function Sidebar({ projects }: SidebarProps) {
       active: pathname === "/dashboard/calendar",
     },
     {
-      label: "Activity",
+      label: "Activity Log",
       icon: Activity,
       href: "/dashboard/activity",
       active: pathname === "/dashboard/activity",
@@ -73,44 +77,78 @@ export function Sidebar({ projects }: SidebarProps) {
   return (
     <div
       className={cn(
-        "relative flex flex-col h-full bg-card border-r transition-all duration-300",
+        "relative flex flex-col h-full bg-card/80 backdrop-blur-md border-r transition-all duration-300 z-20 select-none",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex items-center justify-between p-4">
-        {!isCollapsed && (
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600" />
-            <span className="text-xl font-bold">Pulse</span>
+      {/* Sidebar Header Brand */}
+      <div className="flex items-center justify-between p-4 border-b">
+        {!isCollapsed ? (
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <PulseMark className="h-8 w-8" />
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg font-black tracking-tight bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+                  Pulse
+                </span>
+                <Badge variant="outline" className="text-[10px] px-1 py-0 border-violet-500/30 text-violet-500 font-mono">
+                  SaaS
+                </Badge>
+              </div>
+              <span className="text-[10px] text-muted-foreground font-medium -mt-1">
+                Engineering Workspace
+              </span>
+            </div>
+          </Link>
+        ) : (
+          <Link href="/dashboard" className="mx-auto">
+            <PulseMark className="h-8 w-8" />
           </Link>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={cn(isCollapsed && "mx-auto")}
+          className={cn("h-7 w-7 text-muted-foreground hover:text-foreground", isCollapsed && "hidden")}
         >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
+          <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-3">
+      {isCollapsed && (
+        <div className="py-2 flex justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(false)}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Main Navigation Links */}
+      <ScrollArea className="flex-1 px-3 py-3">
         <div className="space-y-1">
           {routes.map((route) => (
             <Link key={route.href} href={route.href}>
               <Button
                 variant={route.active ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
-                  isCollapsed && "justify-center px-2"
+                  "w-full justify-start h-9 font-medium transition-colors",
+                  route.active && "bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold",
+                  isCollapsed && "justify-center px-0"
                 )}
               >
-                <route.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-                {!isCollapsed && route.label}
+                <route.icon
+                  className={cn(
+                    "h-4 w-4 shrink-0",
+                    route.active ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground",
+                    !isCollapsed && "mr-2.5"
+                  )}
+                />
+                {!isCollapsed && <span>{route.label}</span>}
               </Button>
             </Link>
           ))}
@@ -118,63 +156,87 @@ export function Sidebar({ projects }: SidebarProps) {
 
         <Separator className="my-4" />
 
+        {/* Project Workspaces section */}
         {!isCollapsed && (
-          <>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-muted-foreground">
-                Projects
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Workspaces ({projects.length})
               </span>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Plus className="h-3 w-3" />
+              <Link href="/dashboard/projects">
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                  <Plus className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
+
             <div className="space-y-1">
-              {projects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/dashboard/projects/${project.id}`}
-                >
-                  <Button
-                    variant={
-                      pathname === `/dashboard/projects/${project.id}`
-                        ? "secondary"
-                        : "ghost"
-                    }
-                    className="w-full justify-start"
-                  >
-                    <div
-                      className="h-2 w-2 rounded-full mr-2"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <span className="truncate">{project.name}</span>
-                  </Button>
-                </Link>
-              ))}
+              {projects.length === 0 ? (
+                <div className="px-2 py-3 text-xs text-muted-foreground">
+                  No projects yet. Click + to create one!
+                </div>
+              ) : (
+                projects.map((project) => {
+                  const isActive = pathname === `/dashboard/projects/${project.id}`;
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/dashboard/projects/${project.id}`}
+                    >
+                      <Button
+                        variant={isActive ? "secondary" : "ghost"}
+                        className={cn(
+                          "w-full justify-start h-8 text-xs font-normal",
+                          isActive && "bg-secondary font-semibold"
+                        )}
+                      >
+                        <div
+                          className="h-2 w-2 rounded-full mr-2.5 shrink-0"
+                          style={{ backgroundColor: project.color || "#8b5cf6" }}
+                        />
+                        <span className="truncate">{project.name}</span>
+                      </Button>
+                    </Link>
+                  );
+                })
+              )}
             </div>
-          </>
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="space-y-2 py-2">
+            {projects.slice(0, 5).map((project) => (
+              <Link
+                key={project.id}
+                href={`/dashboard/projects/${project.id}`}
+                className="flex justify-center"
+              >
+                <div
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
+                  title={project.name}
+                >
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: project.color || "#8b5cf6" }}
+                  />
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </ScrollArea>
 
-      {isCollapsed && (
-        <div className="p-3 space-y-2">
-          {projects.slice(0, 5).map((project) => (
-            <Link
-              key={project.id}
-              href={`/dashboard/projects/${project.id}`}
-            >
-              <div
-                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors"
-                title={project.name}
-              >
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
-              </div>
-            </Link>
-          ))}
+      {/* Sidebar Footer Info */}
+      {!isCollapsed && (
+        <div className="p-3 border-t bg-secondary/20">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <kbd className="px-1 py-0.5 rounded bg-muted border text-[10px] font-mono">⌘K</kbd>
+              Spotlight
+            </span>
+            <span className="text-[10px]">Pulse v2.0</span>
+          </div>
         </div>
       )}
     </div>

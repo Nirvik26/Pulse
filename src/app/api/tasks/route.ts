@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       },
       include: {
         project: {
-          select: { name: true, color: true },
+          select: { id: true, name: true, color: true },
         },
       },
       orderBy: { createdAt: "desc" },

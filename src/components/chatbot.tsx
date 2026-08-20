@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare,
   X,
@@ -15,7 +16,12 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  RotateCcw,
+  Zap,
+  TrendingUp,
+  ListTodo,
 } from "lucide-react";
+import { VoiceInput } from "./voice-input";
 
 interface Message {
   id: string;
@@ -24,11 +30,11 @@ interface Message {
   timestamp: Date;
 }
 
-const suggestedQuestions = [
-  "How do I create a project?",
-  "What features are available?",
-  "Help me organize my tasks",
-  "Show me keyboard shortcuts",
+const suggestedPrompts = [
+  { label: "🎯 Task Breakdown", prompt: "Break down the feature: User Authentication with 2FA and OAuth" },
+  { label: "📊 Sprint Health", prompt: "Give me an audit of my sprint health and workload velocity" },
+  { label: "📋 Daily Standup", prompt: "Generate my daily standup summary based on recent tasks" },
+  { label: "⚡ Power Shortcuts", prompt: "Show me all keyboard shortcuts and productivity tips" },
 ];
 
 export function ChatBot() {
@@ -39,7 +45,7 @@ export function ChatBot() {
       id: "1",
       role: "assistant",
       content:
-        "Hi! I'm Pulse AI Assistant. I can help you manage projects, organize tasks, and answer questions about the platform. How can I assist you today?",
+        "👋 **Welcome to Pulse AI Copilot 2.0!**\n\nI can decompose project goals into subtasks, audit your sprint health, draft standup reports, and answer workflow questions. How can I assist your productivity today?",
       timestamp: new Date(),
     },
   ]);
@@ -54,11 +60,11 @@ export function ChatBot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
     if (isOpen) {
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 150);
     }
   }, [isOpen]);
 
@@ -98,186 +104,219 @@ export function ChatBot() {
         };
         setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        throw new Error("Failed to get response");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: "⚠️ Unable to reach Pulse AI. Please check your network connection and try again.",
+            timestamp: new Date(),
+          },
+        ]);
       }
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "⚠️ Something went wrong processing your request.",
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
-
-  const handleSuggestedQuestion = (question: string) => {
-    sendMessage(question);
+  const clearChat = () => {
+    setMessages([
+      {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Chat reset! How can I assist you with your projects?",
+        timestamp: new Date(),
+      },
+    ]);
   };
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Chat Trigger Button */}
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 z-50 group"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 p-0 z-40 group transition-all duration-300 hover:scale-105"
         >
-          <MessageSquare className="h-6 w-6 group-hover:scale-110 transition-transform" />
+          <div className="relative flex items-center justify-center">
+            <Sparkles className="h-6 w-6 text-white group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
         </Button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 bg-card border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden transition-all duration-300 ${
-            isExpanded ? "w-[600px] h-[80vh]" : "w-[400px] h-[500px]"
-          }`}
+          className={`fixed z-50 transition-all duration-300 ease-in-out flex flex-col ${
+            isExpanded
+              ? "inset-4 md:inset-10 rounded-2xl"
+              : "bottom-6 right-6 w-full max-w-[420px] h-[600px] rounded-2xl"
+          } bg-card/95 backdrop-blur-xl border border-violet-500/30 shadow-2xl overflow-hidden`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-violet-600 to-purple-600">
+          <div className="flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-violet-600 to-purple-700 text-white">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Pulse AI</h3>
-                <p className="text-xs text-white/70">Powered by AI</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-sm">Pulse AI Copilot</h3>
+                  <Badge variant="secondary" className="bg-white/20 text-white border-0 text-[10px] px-1.5 py-0">
+                    v2.0
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-white/80 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Context-Aware Assistant
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-white hover:bg-white/20"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={clearChat}
+                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
+                title="Clear conversation"
               >
-                {isExpanded ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
+                <RotateCcw className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-white hover:bg-white/20"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 hidden md:flex"
+              >
+                {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsOpen(false)}
+                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Quick Action Chips */}
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-secondary/40 border-b overflow-x-auto no-scrollbar text-xs">
+            {suggestedPrompts.map((p, idx) => (
+              <button
+                key={idx}
+                onClick={() => sendMessage(p.prompt)}
+                className="shrink-0 px-2.5 py-1 rounded-full bg-background border hover:border-violet-500 hover:text-violet-500 transition-colors font-medium text-[11px]"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Messages Area */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex items-start gap-3 ${
-                    message.role === "user" ? "flex-row-reverse" : ""
+                  className={`flex gap-3 ${
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback
-                      className={
-                        message.role === "assistant"
-                          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white"
-                          : "bg-secondary"
-                      }
-                    >
-                      {message.role === "assistant" ? (
+                  {message.role === "assistant" && (
+                    <Avatar className="h-7 w-7 mt-0.5 border border-violet-500/30 shrink-0">
+                      <AvatarFallback className="bg-violet-500/10 text-violet-600 text-xs">
                         <Bot className="h-4 w-4" />
-                      ) : (
-                        <User className="h-4 w-4" />
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div
-                    className={`flex flex-col max-w-[80%] ${
-                      message.role === "user" ? "items-end" : "items-start"
+                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                      message.role === "user"
+                        ? "bg-violet-600 text-white rounded-tr-none shadow-md"
+                        : "bg-secondary/70 border rounded-tl-none prose-sm dark:prose-invert"
                     }`}
                   >
+                    <div className="whitespace-pre-wrap">{message.content}</div>
                     <div
-                      className={`rounded-2xl px-4 py-2 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-muted rounded-bl-md"
+                      className={`text-[10px] mt-1.5 text-right ${
+                        message.role === "user" ? "text-white/70" : "text-muted-foreground"
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {message.timestamp.toLocaleTimeString([], {
+                      {new Date(message.timestamp).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
-                    </span>
+                    </div>
                   </div>
+                  {message.role === "user" && (
+                    <Avatar className="h-7 w-7 mt-0.5 border shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               ))}
+
               {isLoading && (
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-gradient-to-r from-violet-600 to-purple-600 text-white">
-                      <Bot className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex gap-3 items-center text-muted-foreground text-xs py-2">
+                  <div className="h-7 w-7 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-600">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
+                  <span>Pulse AI is analyzing and generating response...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
-          {/* Suggested Questions */}
-          {messages.length === 1 && (
-            <div className="px-4 pb-2">
-              <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-              <div className="flex flex-wrap gap-2">
-                {suggestedQuestions.map((question) => (
-                  <button
-                    key={question}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t">
-            <div className="flex items-center gap-2">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1"
-                disabled={isLoading}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!input.trim() || isLoading}
-                className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Chat Input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendMessage(input);
+            }}
+            className="p-3 border-t bg-card/60 flex items-center gap-2"
+          >
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask Copilot (e.g. 'Break down payment flow', 'Check sprint health')..."
+              className="flex-1 text-sm bg-background/80"
+              disabled={isLoading}
+            />
+            <VoiceInput
+              onTranscript={(transcript) => {
+                setInput(transcript);
+                sendMessage(transcript);
+              }}
+              className="h-9 w-9 shrink-0"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim() || isLoading}
+              className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg shrink-0 h-9 w-9"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </form>
         </div>
       )}

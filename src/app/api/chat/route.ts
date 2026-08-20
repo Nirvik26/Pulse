@@ -8,178 +8,217 @@ interface Message {
   content: string;
 }
 
-const systemPrompt = `You are Pulse AI, a helpful and friendly assistant for the Pulse project management platform.
-
-Your capabilities:
-- Help users create and manage projects
-- Assist with task organization and prioritization
-- Answer questions about platform features
-- Provide productivity tips and best practices
-- Help with project management workflows
-
-Platform features:
-- Projects: Create, edit, delete projects with custom colors
-- Tasks: Kanban board with drag-and-drop (To Do, In Progress, Done)
-- Task priorities: Low, Medium, High
-- Due dates and calendar view
-- Activity tracking and notifications
-- Dark/light mode
-- Settings and profile management
-
-Key pages:
-- Dashboard: Overview with charts and stats
-- Projects: /dashboard/projects - View all projects
-- Calendar: /dashboard/calendar - Calendar view of tasks
-- Activity: /dashboard/activity - Activity feed
-- Settings: /dashboard/settings - User preferences
-
-Keyboard tips:
-- Tasks can be dragged between columns in the kanban board
-- Click on project cards to view details
-
-Be concise, helpful, and friendly. Use emojis occasionally to be engaging.`;
-
-const responses: Record<string, string> = {
-  "how do i create a project":
-    "Creating a project is easy! 🚀\n\n1. Click the **+ New Project** button on the dashboard\n2. Enter a project name and description\n3. Choose a color to identify your project\n4. Click **Create Project**\n\nYour new project will appear in the sidebar and on the dashboard!",
-  
-  "what features are available":
-    "Pulse offers powerful project management features! ✨\n\n• **Projects** - Organize work into separate projects\n• **Kanban Board** - Drag & drop tasks between columns\n• **Task Priorities** - Set Low, Medium, or High priority\n• **Due Dates** - Track deadlines with calendar view\n• **Activity Log** - See all changes in real-time\n• **Notifications** - Stay updated on important events\n• **Dark Mode** - Easy on the eyes\n• **Settings** - Customize your experience",
-  
-  "help me organize my tasks":
-    "Here are some tips for organizing tasks effectively! 📋\n\n1. **Use the Kanban Board** - Drag tasks from To Do → In Progress → Done\n2. **Set Priorities** - Mark urgent tasks as High priority\n3. **Add Due Dates** - See deadlines in the Calendar view\n4. **Break Down Work** - Create smaller, manageable tasks\n5. **Review Regularly** - Check your Activity feed for updates",
-  
-  "show me keyboard shortcuts":
-    "Here are some helpful tips! ⌨️\n\n• **Drag & Drop** - Move tasks between columns by dragging\n• **Click Projects** - Click any project card to open it\n• **Search** - Use the search bar in the header\n• **Theme Toggle** - Click the sun/moon icon for dark mode\n• **Notifications** - Bell icon shows unread count",
-  
-  hello: "Hello! 👋 I'm Pulse AI, your project management assistant. How can I help you today?",
-  
-  hi: "Hi there! 👋 Great to see you! What can I help you with today?",
-  
-  thanks: "You're welcome! 😊 Let me know if you need anything else!",
-  
-  "thank you": "Happy to help! 🌟 Feel free to ask more questions anytime!",
-};
-
-function findBestMatch(input: string): string {
-  const lowerInput = input.toLowerCase().trim();
-  
-  // Direct match
-  for (const [key, value] of Object.entries(responses)) {
-    if (lowerInput.includes(key)) {
-      return value;
-    }
-  }
-  
-  // Keyword matching
-  if (lowerInput.includes("create") || lowerInput.includes("new") || lowerInput.includes("add")) {
-    if (lowerInput.includes("project")) {
-      return responses["how do i create a project"];
-    }
-    if (lowerInput.includes("task")) {
-      return "To add a task:\n\n1. Open a project by clicking on it\n2. Click **+ New Task** button\n3. Enter title, description, priority, and due date\n4. Click **Create Task**\n\nThe task will appear in the 'To Do' column. You can then drag it to 'In Progress' or 'Done' as you work! 📝";
-    }
-  }
-  
-  if (lowerInput.includes("feature") || lowerInput.includes("what can") || lowerInput.includes("capabilities")) {
-    return responses["what features are available"];
-  }
-  
-  if (lowerInput.includes("organize") || lowerInput.includes("manage") || lowerInput.includes("help")) {
-    return responses["help me organize my tasks"];
-  }
-  
-  if (lowerInput.includes("delete") || lowerInput.includes("remove")) {
-    return "To delete items:\n\n• **Projects**: Click the ⋮ menu on a project card → Delete\n• **Tasks**: Click the trash icon on any task\n\n⚠️ Note: Deleting a project will also delete all its tasks. Be careful!";
-  }
-  
-  if (lowerInput.includes("dark") || lowerInput.includes("theme") || lowerInput.includes("mode")) {
-    return "To toggle dark mode:\n\n1. Look for the 🌙/☀️ icon in the header\n2. Click it to switch between light and dark themes\n\nYou can also change it in Settings → Appearance! 🌙";
-  }
-  
-  if (lowerInput.includes("calendar") || lowerInput.includes("date") || lowerInput.includes("deadline")) {
-    return "The Calendar view shows all your tasks by due date! 📅\n\n• Navigate to **Calendar** in the sidebar\n• See tasks scheduled for each day\n• Click on tasks to navigate to their project\n• Upcoming tasks are listed below the calendar";
-  }
-  
-  if (lowerInput.includes("notification") || lowerInput.includes("alert")) {
-    return "Notifications keep you updated! 🔔\n\n• Click the bell icon in the header\n• Unread count shows on the icon\n• Mark notifications as read\n• View all in the Notifications page\n\nYou'll get notifications when projects are created and other important events!";
-  }
-  
-  if (lowerInput.includes("priority") || lowerInput.includes("important")) {
-    return "Task priorities help you focus! 🎯\n\n• **High** - Urgent, needs immediate attention (red)\n• **Medium** - Important but not urgent (yellow)\n• **Low** - Nice to have (green)\n\nSet priority when creating or editing a task. Filter tasks by priority in the kanban board!";
-  }
-  
-  if (lowerInput.includes("setting") || lowerInput.includes("profile") || lowerInput.includes("account")) {
-    return "Manage your account in Settings! ⚙️\n\n• **Profile** - Update name and email\n• **Appearance** - Toggle dark mode\n• **Notifications** - Configure alerts\n• **Security** - Change password, 2FA\n\nGo to Settings in the sidebar to access these options!";
-  }
-  
-  if (lowerInput.includes("drag") || lowerInput.includes("move") || lowerInput.includes("kanban")) {
-    return "The Kanban board supports drag & drop! 🎯\n\n• Grab a task by its grip icon (⋮⋮)\n• Drag it to another column\n• Drop to change status:\n  - To Do → In Progress → Done\n\nChanges save automatically!";
-  }
-  
-  if (lowerInput.includes("chart") || lowerInput.includes("analytics") || lowerInput.includes("stats")) {
-    return "The Dashboard shows your analytics! 📊\n\n• **Task Status** - Pie chart of task distribution\n• **Priority Distribution** - Bar chart by priority\n• **Project Progress** - Completion percentage\n• **Stats Cards** - Quick metrics overview\n\nThese update in real-time as you work!";
-  }
-  
-  // Default responses
-  const defaults = [
-    "I'd be happy to help! Could you tell me more about what you're trying to do? 🤔",
-    "Interesting question! I can help with projects, tasks, and platform features. What specifically would you like to know? 💡",
-    "I'm here to help you get the most out of Pulse! Try asking about creating projects, managing tasks, or platform features. 🚀",
-    "Let me help you with that! Can you provide more details about what you need? 😊",
-  ];
-  
-  return defaults[Math.floor(Math.random() * defaults.length)];
-}
-
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
     const body = await req.json();
     const { messages } = body;
-    
-    const userMessage = messages[messages.length - 1];
-    
-    if (userMessage.role !== "user") {
+
+    const userMessage: Message = messages[messages.length - 1];
+
+    if (!userMessage || userMessage.role !== "user") {
       return NextResponse.json({ error: "Invalid message" }, { status: 400 });
     }
 
-    // Get user's projects for context-aware responses
-    let projectContext = "";
+    const input = userMessage.content.toLowerCase().trim();
+
+    // Fetch user's real projects & tasks for live intelligence
+    let projects: any[] = [];
+    let tasks: any[] = [];
+
     if (session?.user?.id) {
       try {
-        const projects = await prisma.project.findMany({
-          where: { userId: session.user.id },
-          select: { name: true, _count: { select: { tasks: true } } },
-          take: 5,
-        });
-        
-        if (projects.length > 0) {
-          projectContext = `\nUser's projects: ${projects.map(p => `${p.name} (${p._count.tasks} tasks)`).join(", ")}`;
-        }
+        [projects, tasks] = await Promise.all([
+          prisma.project.findMany({
+            where: { userId: session.user.id },
+            include: { _count: { select: { tasks: true } } },
+            take: 6,
+          }),
+          prisma.task.findMany({
+            where: { userId: session.user.id },
+            include: { project: { select: { name: true } } },
+            take: 20,
+          }),
+        ]);
       } catch (e) {
-        // Ignore database errors
+        // Fallback gracefully
       }
     }
 
-    // Generate response
-    let response = findBestMatch(userMessage.content);
-    
-    // Add project context if relevant
-    if (projectContext && (userMessage.content.toLowerCase().includes("my project") || 
-        userMessage.content.toLowerCase().includes("projects"))) {
-      response += `\n\n📊 Your current projects:${projectContext.replace("\nUser's projects:", "")}`;
+    const totalTasks = tasks.length;
+    const doneTasks = tasks.filter((t) => t.status === "done").length;
+    const inProgressTasks = tasks.filter((t) => t.status === "in-progress").length;
+    const todoTasks = tasks.filter((t) => t.status === "todo").length;
+    const highPriority = tasks.filter((t) => t.priority === "high").length;
+    const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+    let response = "";
+
+    // 1. Task Decomposition / Breakdown Request
+    if (
+      input.includes("generate task") ||
+      input.includes("break down") ||
+      input.includes("create task") ||
+      input.includes("plan for") ||
+      input.includes("roadmap")
+    ) {
+      const topic = userMessage.content
+        .replace(/generate tasks? for/i, "")
+        .replace(/break down/i, "")
+        .replace(/create tasks? for/i, "")
+        .replace(/plan for/i, "")
+        .trim() || "Feature Implementation";
+
+      response = `🎯 **AI Task Breakdown for "${topic}":**
+
+Here is a recommended sprint-ready breakdown tailored for rapid execution:
+
+1. ⚡ **Architecture & Schema Design**
+   - Priority: \`HIGH\` | Est: 2h
+   - Define data models, migration scripts, and index requirements.
+
+2. 🔐 **Core Backend Logic & Validation**
+   - Priority: \`HIGH\` | Est: 3h
+   - Implement API routes, error boundaries, and input schemas.
+
+3. 🎨 **Frontend UI & Interactive State**
+   - Priority: \`MEDIUM\` | Est: 4h
+   - Build accessible components, optimistic state updates, and loading skeletons.
+
+4. 🧪 **Edge Case Testing & Optimizations**
+   - Priority: \`MEDIUM\` | Est: 2h
+   - Write integration tests, audit query roundtrips, and handle error states.
+
+5. 🚀 **Production Telemetry & Documentation**
+   - Priority: \`LOW\` | Est: 1h
+   - Document API endpoints and verify metrics logging.
+
+💡 *Tip: You can quickly create these directly on your Kanban board using the \`+ New Task\` button or via ⌘K!*`;
     }
 
-    // Simulate thinking delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    // 2. Sprint Health & Project Audit
+    else if (
+      input.includes("health") ||
+      input.includes("audit") ||
+      input.includes("velocity") ||
+      input.includes("how am i doing") ||
+      input.includes("progress") ||
+      input.includes("stats")
+    ) {
+      const healthScore = Math.min(100, Math.max(30, completionRate + (inProgressTasks > 0 ? 15 : 0)));
+      const statusBadge = healthScore > 75 ? "🟢 Excellent" : healthScore > 50 ? "🟡 Healthy" : "🟠 Needs Attention";
+
+      response = `📊 **Pulse Project Health & Velocity Report**
+
+• **Overall Health Score:** **${healthScore}/100** (${statusBadge})
+• **Completion Velocity:** **${completionRate}%** (${doneTasks} of ${totalTasks} tasks completed)
+• **Active In-Progress:** **${inProgressTasks}** tasks currently underway
+• **High Priority Backlog:** **${highPriority}** items tagged \`HIGH\`
+• **Active Projects:** **${projects.length}** workspaces configured
+
+💡 **Actionable Recommendations:**
+${
+  highPriority > 2
+    ? "• ⚠️ You have multiple High-priority items. Focus on finishing current in-progress tickets before starting new backlog items."
+    : "• ✅ High-priority backlog is well-balanced."
+}
+${
+  inProgressTasks > 3
+    ? "• 🔄 High context switching detected (more than 3 concurrent tasks). Use the **Focus Timer** to tackle tasks sequentially."
+    : "• 🎯 Great focus flow! Keep working in targeted Pomodoro sprints."
+}`;
+    }
+
+    // 3. Standup Summary Generation
+    else if (
+      input.includes("standup") ||
+      input.includes("summary") ||
+      input.includes("daily update") ||
+      input.includes("report")
+    ) {
+      const recentDone = tasks.filter((t) => t.status === "done").slice(0, 3);
+      const currentDoing = tasks.filter((t) => t.status === "in-progress").slice(0, 3);
+      const upcoming = tasks.filter((t) => t.status === "todo").slice(0, 2);
+
+      response = `📋 **Daily Standup Summary:**
+
+**Yesterday / Completed:**
+${
+  recentDone.length > 0
+    ? recentDone.map((t) => `• [DONE] ${t.title} (${t.project?.name || "General"})`).join("\n")
+    : "• Completed scheduled sprint planning and architecture reviews."
+}
+
+**Today / In-Progress:**
+${
+  currentDoing.length > 0
+    ? currentDoing.map((t) => `• [IN-PROGRESS] ${t.title} (${t.project?.name || "General"})`).join("\n")
+    : "• Focusing on high-priority backlog items."
+}
+
+**Next / Up Next:**
+${
+  upcoming.length > 0
+    ? upcoming.map((t) => `• [PLANNED] ${t.title}`).join("\n")
+    : "• Continuing sprint roadmap objectives."
+}
+
+**Blockers:**
+• None reported. On track for milestone delivery! 🚀`;
+    }
+
+    // 4. Keyboard Shortcuts & Power Tips
+    else if (
+      input.includes("shortcut") ||
+      input.includes("keyboard") ||
+      input.includes("command") ||
+      input.includes("cmd+k")
+    ) {
+      response = `⚡ **Pulse Power-User Shortcuts:**
+
+• **⌘K / Ctrl+K** — Global Spotlight Command Palette (Search projects, tasks, navigate)
+• **Drag & Drop** — Smooth Kanban board reordering
+• **Focus Timer** — Floating Pomodoro productivity clock at bottom-left
+• **Confetti Burst** — Automatic celebration whenever you drag a task to \`Done\`
+• **CSV / JSON Export** — Export project sprint data with one click`;
+    }
+
+    // 5. General Project / Feature help
+    else if (
+      input.includes("project") ||
+      input.includes("create") ||
+      input.includes("how to") ||
+      input.includes("help")
+    ) {
+      response = `🚀 **Pulse Capabilities & Pro Tips:**
+
+1. **Kanban Boards** — Visualize workflows in To Do, In Progress, and Done.
+2. **AI Task Assistant** — Ask me to *"Break down [feature goal]"* and I'll generate actionable sprint tasks!
+3. **Pomodoro Timer** — Stay in deep work flow with integrated intervals.
+4. **Spotlight Search (⌘K)** — Jump across any project or page in milliseconds.
+5. **Activity Log** — Comprehensive audit trails of all team actions.
+
+What would you like to explore or organize next?`;
+    }
+
+    // Default friendly assistant
+    else {
+      response = `👋 Hi! I'm your **Pulse AI Copilot**.
+
+I can help you:
+• 🎯 **Break down goals into subtasks** (e.g. *"Break down OAuth 2.0 authentication"*)
+• 📊 **Audit project health & velocity** (e.g. *"Check my sprint health"*)
+• 📋 **Draft daily standup updates** (e.g. *"Generate daily standup"*)
+• ⚡ **Manage tasks & deadlines**
+
+How can I assist you with your projects today?`;
+    }
 
     return NextResponse.json({ message: response });
   } catch (error) {
-    console.error("Chat error:", error);
+    console.error("Chat API error:", error);
     return NextResponse.json(
-      { message: "Sorry, I encountered an error. Please try again." },
+      { message: "Pulse AI encountered an issue. Please try again." },
       { status: 500 }
     );
   }

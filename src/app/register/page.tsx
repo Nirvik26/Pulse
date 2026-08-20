@@ -14,6 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toaster";
+import { PulseMark } from "@/components/pulse-mark";
+import { Sparkles, Loader2, ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,22 +39,22 @@ export default function RegisterPage() {
       if (!res.ok) {
         const data = await res.json();
         toast({
-          title: "Error",
-          description: data.error || "Something went wrong",
+          title: "Registration Error",
+          description: data.error || "Something went wrong creating account.",
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Success",
-        description: "Account created successfully",
+        title: "Account Created",
+        description: "Welcome to Pulse! You can now sign in.",
       });
       router.push("/login");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Something went wrong",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -61,64 +63,86 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600" />
-            <span className="text-xl font-bold">Pulse</span>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/30 p-4 relative overflow-hidden">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <Card className="w-full max-w-md border-violet-500/20 shadow-2xl bg-card/95 backdrop-blur-xl relative z-10">
+        <CardHeader className="text-center pb-4">
+          <div className="flex justify-center mb-3">
+            <PulseMark className="h-10 w-10" />
           </div>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>
-            Start managing your projects today
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardDescription className="text-xs">
+            Start organizing your sprints with AI-powered velocity
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+
+        <CardContent className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-3.5">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs">Full Name</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Alex Rivera"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                placeholder="alex@pulse.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-xs">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                className="h-9 text-sm"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create Account"}
+            <Button
+              type="submit"
+              className="w-full bg-violet-600 hover:bg-violet-700 h-9 text-sm font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Create Free Account"
+              )}
             </Button>
           </form>
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
-              Sign in
-            </Link>
-          </p>
+
+          <div className="pt-2 border-t text-center space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-violet-500 font-semibold hover:underline">
+                Sign in
+              </Link>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Just reviewing?{" "}
+              <Link href="/login" className="text-foreground font-medium hover:underline inline-flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-violet-500" /> Try 1-Click Recruiter Sandbox
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
