@@ -49,10 +49,10 @@ export default function DashboardLayout({
   if (status === "loading") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-purple-600 flex items-center justify-center animate-pulse">
-          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center shadow-xs">
+          <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
         </div>
-        <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading Pulse Workspace...</p>
+        <p className="text-xs font-medium text-muted-foreground">Loading workspace...</p>
       </div>
     );
   }

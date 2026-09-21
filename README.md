@@ -58,19 +58,31 @@ Test the platform instantly with zero setup or registration friction:
 - **Granular Subtask Checklist**: Break tasks into actionable checklist items with dynamic percentage progress calculation.
 - **Task Discussion Threads**: Threaded comments with timestamps, user avatars, and instant feedback.
 
-### 5. 🎯 Fluid Drag-and-Drop Kanban with Celebration Engine
+### 5. 🎯 Fluid Drag-and-Drop Kanban with Multi-Sensory Celebration Engine
 - Smooth accessible drag-and-drop powered by `@dnd-kit`.
-- Optimistic state updates and zero-dependency canvas particle **confetti celebrations** when moving tasks to `Done`.
+- Dual-trigger celebration engine:
+  - **Physics Particle Bursts**: Powered by `canvas-confetti` with multi-angle confetti cannons.
+  - **Synthesized Harmonic Chime**: Native **Web Audio API** (`AudioContext`) playing a crisp 4-note upward major arpeggio (C5 → E5 → G5 → C6) upon task completion, subtask 100% completion, and Pomodoro focus intervals.
 - Real-time task filtering by keyword, priority, and date range.
 
-### 6. ⏱️ Integrated Pomodoro Focus Timer
-- Floating dockable productivity clock (25m Focus / 5m Break) with audio chimes and completed cycle telemetry to encourage deep work.
+### 6. ⏱️ Free-Floating Draggable Pomodoro Focus Timer
+- Fully draggable productivity clock anywhere across the viewport with boundary clamping and cursor grabbing physics.
+- 25m Focus / 5m Short Break / 15m Long Break intervals with real-time session telemetry.
 
-### 7. 📊 Velocity Analytics & Real-Time Sync Telemetry
+### 7. ⚡ Reactive Global State with Zustand
+- Ultra-lightweight reactive client store (`useWorkspaceStore`) coordinating spotlight dialogs, active task drawers, AI copilot context, and optimistic task updates across components without prop drilling.
+
+### 8. 📊 Velocity Analytics & Real-Time Sync Telemetry
 - Interactive charts powered by `Recharts` visualizing weekly completion velocity, priority distribution matrices, and pipeline health scores.
+- Recharts dark mode contrast calibration with dynamic theme tooltips and zero illegible text.
 - Live database query latency indicator (`Sync: 12ms`).
 
-### 8. 📤 Multi-Format Export Engine
+### 9. 🎨 Modern Color Harmony & Custom Avatar Engine
+- Modern indigo/violet, emerald, amber, and rose accents replacing generic monochrome palettes.
+- Custom avatar uploader with drag-and-drop image upload, instant base64 preview, and persistence.
+- Optional subtask creation workflow: add subtasks on-demand without unwanted phantom default items.
+
+### 10. 📤 Multi-Format Export Engine
 - One-click export of sprint boards to **CSV**, **JSON**, or formatted **Markdown** for instant sharing in team standups or Slack/Discord.
 
 ---
@@ -79,12 +91,14 @@ Test the platform instantly with zero setup or registration friction:
 
 ```mermaid
 flowchart TD
-    subgraph Client["Frontend (Next.js 14 Client Layer)"]
+    subgraph Client["Frontend (Next.js 14 Client Layer & Zustand)"]
         UI[Modern Dashboard & Landing Page]
+        ZStore[Zustand Reactive Workspace Store]
         CP[⌘K Command Palette]
         Kanban[DND-Kit Kanban Board]
-        Timer[Pomodoro Focus Clock]
+        Timer[Draggable Pomodoro Focus Clock]
         Chat[Pulse AI Copilot Interface]
+        Celebration[Canvas-Confetti + Web Audio Chime]
     end
 
     subgraph Server["Backend (Next.js Route Handlers & Server API)"]
@@ -100,11 +114,16 @@ flowchart TD
         DB[(SQLite / PostgreSQL DB)]
     end
 
+    UI --> ZStore
+    ZStore --> CP
+    ZStore --> Kanban
+    ZStore --> Chat
+    Kanban --> Celebration
+    Timer --> Celebration
     UI --> Auth
     CP --> Task_Route
     Kanban --> Task_Route
     Chat --> AI_Route
-    Timer --> UI
     UI --> Export_Route
     UI --> Demo_Route
 
@@ -175,8 +194,9 @@ erDiagram
 | `⌘K` / `Ctrl+K` | Open Spotlight Command Palette | Global |
 | `↑` / `↓` | Navigate Spotlight items | Command Palette |
 | `Enter` | Select / Execute item | Command Palette |
+| `N` | Create new task modal | Project Board |
 | `Esc` | Close modal / dialog | Global |
-| `Drag & Drop` | Reorder task status column | Kanban Board |
+| `Drag & Drop` | Reorder task status column or reposition timer | Kanban / Viewport |
 
 ---
 
@@ -186,10 +206,12 @@ erDiagram
 |---|---|---|
 | **Framework** | **Next.js 14 (App Router)** | Server-side rendering, API route handlers, optimized bundle size. |
 | **Language** | **TypeScript 5.3** | End-to-end type safety, strict schemas, robust refactoring. |
+| **Global State** | **Zustand** | Predictable, zero-boilerplate client state store with direct subscriber access. |
 | **Styling** | **Tailwind CSS + shadcn/ui** | Design system tokenization, dark/light theme switching, glassmorphic UI. |
 | **Database & ORM** | **Prisma 5 + SQLite** | Type-safe queries, migration control, zero external cloud DB setup required. |
+| **Celebration Engine**| **canvas-confetti + Web Audio API** | Dual physics-based confetti bursts & synthesized harmonic arpeggio chimes. |
 | **Authentication** | **NextAuth.js v4** | JWT session strategies, encrypted credentials, seamless guest sandboxes. |
-| **Interactive UX** | **@dnd-kit + Recharts** | Modern pointer/keyboard drag-and-drop & SVG chart rendering. |
+| **Interactive UX** | **@dnd-kit + Recharts + date-fns** | Accessible drag-and-drop, high-contrast SVG telemetry, and relative timestamps. |
 
 ---
 
@@ -272,6 +294,8 @@ Pulse/
 │   │   ├── auth.ts           # NextAuth configuration
 │   │   ├── db.ts             # Prisma singleton client
 │   │   └── utils.ts          # Classname & styling utilities
+│   ├── store/
+│   │   └── useWorkspaceStore.ts # Central Zustand workspace store
 └── package.json
 ```
 

@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -50,6 +51,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   CheckCircle2,
   Circle,
@@ -64,13 +71,15 @@ import {
   Search,
   Filter,
   ArrowLeft,
-  Sparkles,
   Layers,
+  MoreVertical,
+  Settings,
+  Loader2,
+  ListTodo,
+  X,
 } from "lucide-react";
 import { fireConfetti } from "@/components/confetti";
 import { TaskDetailModal } from "@/components/task-detail-modal";
-import { VoiceInput } from "@/components/voice-input";
-import { predictTaskAttributes } from "@/lib/ai-helper";
 import type { Task, Project } from "@/types";
 
 interface Column {
@@ -82,8 +91,8 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: "todo", title: "To Do", icon: <Circle className="h-4 w-4" />, color: "text-slate-500", bg: "bg-slate-500/10" },
-  { id: "in-progress", title: "In Progress", icon: <Clock className="h-4 w-4" />, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { id: "todo", title: "To Do", icon: <Circle className="h-4 w-4" />, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-500/10" },
+  { id: "in-progress", title: "In Progress", icon: <Clock className="h-4 w-4" />, color: "text-amber-500", bg: "bg-amber-500/10" },
   { id: "done", title: "Done", icon: <CheckCircle2 className="h-4 w-4" />, color: "text-emerald-500", bg: "bg-emerald-500/10" },
 ];
 
@@ -92,11 +101,13 @@ function SortableTaskCard({
   onDelete,
   onEdit,
   onOpenDetail,
+  onDuplicate,
 }: {
   task: Task;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
   onOpenDetail: (task: Task) => void;
+  onDuplicate?: (task: Task) => void;
 }) {
   const {
     attributes,
@@ -115,20 +126,29 @@ function SortableTaskCard({
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge variant="destructive" className="text-[10px] uppercase font-mono px-1.5 py-0">High</Badge>;
+        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/25">High</Badge>;
       case "medium":
-        return <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 uppercase font-mono px-1.5 py-0">Medium</Badge>;
+        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25">Medium</Badge>;
+      case "low":
+        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">Low</Badge>;
       default:
-        return <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 uppercase font-mono px-1.5 py-0">Low</Badge>;
+        return null;
     }
   };
+
+  const priorityBorder =
+    task.priority === "high"
+      ? "border-l-[3px] border-l-rose-500"
+      : task.priority === "medium"
+      ? "border-l-[3px] border-l-amber-500"
+      : "border-l-[3px] border-l-emerald-500";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-xl border bg-card p-3.5 shadow-sm transition-all hover:shadow-md hover:border-violet-500/40 ${
-        isDragging ? "opacity-40 ring-2 ring-violet-500" : ""
+      className={`group relative rounded-xl border bg-card p-3.5 shadow-xs transition-all hover:shadow-sm hover:border-primary/40 ${priorityBorder} ${
+        isDragging ? "opacity-40 ring-2 ring-primary" : ""
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -144,7 +164,7 @@ function SortableTaskCard({
             className="flex-1 min-w-0 cursor-pointer"
             onClick={() => onOpenDetail(task)}
           >
-            <h4 className="font-semibold text-sm leading-snug break-words text-foreground group-hover:text-violet-500 transition-colors">
+            <h4 className="font-semibold text-sm leading-snug break-words text-foreground group-hover:text-primary transition-colors">
               {task.title}
             </h4>
             {task.description && (
@@ -155,22 +175,44 @@ function SortableTaskCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {onDuplicate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate(task);
+              }}
+              title="Duplicate task"
+            >
+              <Copy className="h-3.5 w-3.5 shrink-0" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => onEdit(task)}
+            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task);
+            }}
+            title="Edit task"
           >
-            <Edit className="h-3.5 w-3.5" />
+            <Edit className="h-3.5 w-3.5 shrink-0" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-rose-500"
-            onClick={() => onDelete(task.id)}
+            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task.id);
+            }}
+            title="Delete task"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5 shrink-0" />
           </Button>
         </div>
       </div>
@@ -209,6 +251,21 @@ export default function ProjectDetailsPage() {
     status: "todo",
   });
 
+  // Optional subtasks for new task creation
+  const [creationSubtasks, setCreationSubtasks] = useState<string[]>([]);
+  const [newSubtaskInput, setNewSubtaskInput] = useState("");
+
+  const handleAddCreationSubtask = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newSubtaskInput.trim()) return;
+    setCreationSubtasks((prev) => [...prev, newSubtaskInput.trim()]);
+    setNewSubtaskInput("");
+  };
+
+  const handleRemoveCreationSubtask = (index: number) => {
+    setCreationSubtasks((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -220,9 +277,48 @@ export default function ProjectDetailsPage() {
     })
   );
 
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
+  const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false);
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: "",
+    color: "#3b82f6",
+    status: "active",
+  });
+  const [isSavingProject, setIsSavingProject] = useState(false);
+
   useEffect(() => {
     fetchProject();
   }, [params.id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable ||
+        isTaskDialogOpen ||
+        isProjectSettingsOpen ||
+        isDeleteProjectOpen ||
+        selectedDetailTask !== null
+      ) {
+        return;
+      }
+
+      if ((e.key === "n" || e.key === "N") && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setEditingTask(null);
+        setNewTask({ title: "", description: "", priority: "medium", dueDate: "", status: "todo" });
+        setCreationSubtasks([]);
+        setNewSubtaskInput("");
+        setIsTaskDialogOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isTaskDialogOpen, isProjectSettingsOpen, isDeleteProjectOpen, selectedDetailTask]);
 
   const fetchProject = async () => {
     try {
@@ -230,6 +326,12 @@ export default function ProjectDetailsPage() {
       if (res.ok) {
         const data = await res.json();
         setProject(data);
+        setProjectForm({
+          name: data.name,
+          description: data.description || "",
+          color: data.color || "#3b82f6",
+          status: data.status || "active",
+        });
       } else {
         toast({ title: "Error", description: "Project not found", variant: "destructive" });
         router.push("/dashboard/projects");
@@ -238,6 +340,43 @@ export default function ProjectDetailsPage() {
       toast({ title: "Error", description: "Failed to load project", variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateProjectDetails = async () => {
+    if (!projectForm.name.trim()) return;
+    setIsSavingProject(true);
+    try {
+      const res = await fetch(`/api/projects/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectForm),
+      });
+      if (res.ok) {
+        toast({ title: "Project Updated", description: "Workspace details saved." });
+        setIsProjectSettingsOpen(false);
+        fetchProject();
+      } else {
+        toast({ title: "Error", description: "Failed to update project", variant: "destructive" });
+      }
+    } catch (e) {
+      toast({ title: "Error", description: "Could not update project", variant: "destructive" });
+    } finally {
+      setIsSavingProject(false);
+    }
+  };
+
+  const deleteCurrentProject = async () => {
+    try {
+      const res = await fetch(`/api/projects/${params.id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast({ title: "Project Deleted", description: "Workspace removed." });
+        router.push("/dashboard/projects");
+      } else {
+        toast({ title: "Error", description: "Failed to delete project", variant: "destructive" });
+      }
+    } catch (e) {
+      toast({ title: "Error", description: "Could not delete project", variant: "destructive" });
     }
   };
 
@@ -251,6 +390,26 @@ export default function ProjectDetailsPage() {
           body: JSON.stringify(newTask),
         });
         if (res.ok) {
+          // Persist updated subtasks
+          const key = `pulse_subtasks_${editingTask.id}`;
+          const existingSaved = localStorage.getItem(key);
+          let existingDoneMap: Record<string, boolean> = {};
+          if (existingSaved) {
+            try {
+              JSON.parse(existingSaved).forEach((s: any) => {
+                existingDoneMap[s.text] = s.done;
+              });
+            } catch (e) {}
+          }
+          const subtasksToSave = creationSubtasks
+            .filter((t) => t.trim().length > 0)
+            .map((text, idx) => ({
+              id: `${Date.now()}_${idx}`,
+              text: text.trim(),
+              done: !!existingDoneMap[text.trim()],
+            }));
+          localStorage.setItem(key, JSON.stringify(subtasksToSave));
+
           toast({ title: "Task Updated", description: "Changes saved successfully" });
           if (newTask.status === "done" && editingTask.status !== "done") {
             fireConfetti();
@@ -263,12 +422,24 @@ export default function ProjectDetailsPage() {
           body: JSON.stringify({ ...newTask, projectId: params.id }),
         });
         if (res.ok) {
+          const createdTask = await res.json();
+          // Persist user-added subtasks, or empty array if none were added
+          const subtasksToSave = creationSubtasks
+            .filter((t) => t.trim().length > 0)
+            .map((text, idx) => ({
+              id: `${Date.now()}_${idx}`,
+              text: text.trim(),
+              done: false,
+            }));
+          localStorage.setItem(`pulse_subtasks_${createdTask.id}`, JSON.stringify(subtasksToSave));
           toast({ title: "Task Created", description: "New task added to board" });
         }
       }
       setIsTaskDialogOpen(false);
       setEditingTask(null);
       setNewTask({ title: "", description: "", priority: "medium", dueDate: "", status: "todo" });
+      setCreationSubtasks([]);
+      setNewSubtaskInput("");
       fetchProject();
     } catch (error) {
       toast({ title: "Error", description: "Failed to save task", variant: "destructive" });
@@ -287,6 +458,35 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  const duplicateTask = async (taskToDuplicate: Task) => {
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${taskToDuplicate.title} (Copy)`,
+          description: taskToDuplicate.description || "",
+          priority: taskToDuplicate.priority || "medium",
+          dueDate: taskToDuplicate.dueDate ? new Date(taskToDuplicate.dueDate).toISOString() : "",
+          status: taskToDuplicate.status || "todo",
+          projectId: params.id,
+        }),
+      });
+      if (res.ok) {
+        const createdTask = await res.json();
+        const key = `pulse_subtasks_${taskToDuplicate.id}`;
+        const existingSubtasks = localStorage.getItem(key);
+        if (existingSubtasks && createdTask.id) {
+          localStorage.setItem(`pulse_subtasks_${createdTask.id}`, existingSubtasks);
+        }
+        toast({ title: "Task Duplicated", description: `Created copy of "${taskToDuplicate.title}"` });
+        fetchProject();
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to duplicate task", variant: "destructive" });
+    }
+  };
+
   const openEditDialog = (task: Task) => {
     setEditingTask(task);
     setNewTask({
@@ -296,6 +496,20 @@ export default function ProjectDetailsPage() {
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
       status: task.status,
     });
+    // Load subtasks for this task
+    const key = `pulse_subtasks_${task.id}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setCreationSubtasks(parsed.map((s: any) => s.text));
+      } catch (e) {
+        setCreationSubtasks([]);
+      }
+    } else {
+      setCreationSubtasks([]);
+    }
+    setNewSubtaskInput("");
     setIsTaskDialogOpen(true);
   };
 
@@ -373,7 +587,7 @@ export default function ProjectDetailsPage() {
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -425,26 +639,47 @@ export default function ProjectDetailsPage() {
             onClick={() => {
               setEditingTask(null);
               setNewTask({ title: "", description: "", priority: "medium", dueDate: "", status: "todo" });
+              setCreationSubtasks([]);
+              setNewSubtaskInput("");
               setIsTaskDialogOpen(true);
             }}
-            className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5 text-xs"
+            className="gap-1.5 text-xs"
           >
             <Plus className="h-4 w-4" /> New Task
+            <kbd className="hidden sm:inline-flex items-center justify-center h-4 min-w-[16px] px-1 text-[10px] font-mono font-medium rounded bg-primary-foreground/20 text-primary-foreground ml-0.5">
+              N
+            </kbd>
           </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsProjectSettingsOpen(true)}>
+                <Settings className="h-4 w-4 mr-2" /> Project Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setIsDeleteProjectOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete Project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {/* Progress Metric Banner */}
-      <Card className="bg-card/70 border-violet-500/20 shadow-sm">
+      <Card className="bg-card border shadow-sm">
         <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
-            <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600 shrink-0">
-              <Layers className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Layers className="h-4 w-4" />
             </div>
             <div className="flex-1 space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold">Sprint Completion Velocity</span>
-                <span className="font-mono font-bold text-violet-500">{progressPercent}% ({doneTasks}/{totalTasks} completed)</span>
+                <span className="font-semibold">Sprint Completion</span>
+                <span className="font-mono font-bold text-primary">{progressPercent}% ({doneTasks}/{totalTasks} completed)</span>
               </div>
               <Progress value={progressPercent} className="h-2" />
             </div>
@@ -462,7 +697,7 @@ export default function ProjectDetailsPage() {
               />
             </div>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="h-8 text-xs w-28 bg-background">
+              <SelectTrigger className="h-8 text-xs w-36 bg-background">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
@@ -513,7 +748,7 @@ export default function ProjectDetailsPage() {
                 >
                   <div className="flex-1 space-y-3">
                     {columnTasks.length === 0 ? (
-                      <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-xs text-muted-foreground/60 p-4 text-center">
+                      <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-border/80 rounded-xl text-xs text-muted-foreground p-4 text-center">
                         <span>No tasks in {column.title}</span>
                       </div>
                     ) : (
@@ -524,11 +759,27 @@ export default function ProjectDetailsPage() {
                           onDelete={deleteTask}
                           onEdit={openEditDialog}
                           onOpenDetail={(t) => setSelectedDetailTask(t)}
+                          onDuplicate={duplicateTask}
                         />
                       ))
                     )}
                   </div>
                 </SortableContext>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingTask(null);
+                    setNewTask({ title: "", description: "", priority: "medium", dueDate: "", status: column.id });
+                    setCreationSubtasks([]);
+                    setNewSubtaskInput("");
+                    setIsTaskDialogOpen(true);
+                  }}
+                  className="mt-3 w-full h-8 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-primary/50 justify-center gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Task
+                </Button>
               </div>
             );
           })}
@@ -536,7 +787,7 @@ export default function ProjectDetailsPage() {
 
         <DragOverlay>
           {activeTask ? (
-            <div className="rounded-xl border bg-card p-3.5 shadow-2xl ring-2 ring-violet-500 scale-105">
+            <div className="rounded-xl border bg-card p-3.5 shadow-2xl ring-2 ring-primary scale-105">
               <h4 className="font-semibold text-sm">{activeTask.title}</h4>
               <Badge variant="outline" className="text-[10px] mt-2 font-mono uppercase">
                 {activeTask.priority}
@@ -554,7 +805,6 @@ export default function ProjectDetailsPage() {
         onTaskUpdated={() => {
           fetchProject();
           if (selectedDetailTask) {
-            // update selected task status if needed
             fetch(`/api/projects/${params.id}`)
               .then((r) => r.json())
               .then((proj) => {
@@ -569,86 +819,62 @@ export default function ProjectDetailsPage() {
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingTask ? "Edit Task" : "Create New Task"}</DialogTitle>
-            <DialogDescription>
-              {editingTask ? "Modify details for this task" : "Add a new actionable item to this project"}
+            <DialogTitle className="text-base font-semibold">{editingTask ? "Edit Task" : "Create New Task"}</DialogTitle>
+            <DialogDescription className="text-xs">
+              {editingTask ? "Modify details for this task" : "Add an actionable task item to this project"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="task-title">Task Title</Label>
-                <VoiceInput onTranscript={(t) => setNewTask((prev) => ({ ...prev, title: t }))} />
-              </div>
+              <Label htmlFor="task-title" className="text-xs font-medium">Task Title</Label>
               <Input
                 id="task-title"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                placeholder="e.g. Implement OAuth login or dictating via mic"
+                placeholder="e.g. Implement OAuth authentication"
                 autoFocus
+                className="h-9 text-sm"
               />
             </div>
 
-            {/* AI Auto-Prediction Banner */}
-            {newTask.title.trim().length > 3 && (
-              <div className="p-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-xs flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Sparkles className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                  <span className="text-muted-foreground truncate">
-                    AI Predicts: <strong className="text-foreground uppercase">{predictTaskAttributes(newTask.title, newTask.description).suggestedPriority}</strong> priority • ~{predictTaskAttributes(newTask.title, newTask.description).estimatedHours}h est
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    const pred = predictTaskAttributes(newTask.title, newTask.description);
-                    setNewTask((prev) => ({ ...prev, priority: pred.suggestedPriority }));
-                  }}
-                  className="h-6 px-2 text-[10px] text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 font-semibold"
-                >
-                  Apply AI
-                </Button>
-              </div>
-            )}
-
             <div className="space-y-1.5">
-              <Label htmlFor="task-desc">Description (Optional)</Label>
-              <Input
+              <Label htmlFor="task-desc" className="text-xs font-medium">Description (Optional)</Label>
+              <Textarea
                 id="task-desc"
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                placeholder="Additional specifications or notes"
+                placeholder="Technical specifications, instructions, or deliverables..."
+                rows={3}
+                className="text-xs resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Priority</Label>
+                <Label className="text-xs font-medium">Priority</Label>
                 <Select
                   value={newTask.priority}
                   onValueChange={(val) => setNewTask({ ...newTask, priority: val })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High (Urgent)</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Status Column</Label>
+                <Label className="text-xs font-medium">Status Column</Label>
                 <Select
                   value={newTask.status}
                   onValueChange={(val) => setNewTask({ ...newTask, status: val })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -661,26 +887,200 @@ export default function ProjectDetailsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="task-date">Due Date</Label>
+              <Label htmlFor="task-date" className="text-xs font-medium">Due Date</Label>
               <Input
                 id="task-date"
                 type="date"
                 value={newTask.dueDate}
                 onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                className="h-9 text-sm"
               />
+            </div>
+
+            {/* Subtasks / Checklist */}
+            <div className="space-y-2 pt-2 border-t border-border/60">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <ListTodo className="h-3.5 w-3.5 text-primary" />
+                  <span>Subtasks / Checklist</span>
+                  <span className="text-[11px] font-normal text-muted-foreground">(Optional)</span>
+                </Label>
+                {creationSubtasks.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {creationSubtasks.length} item{creationSubtasks.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+                {creationSubtasks.length > 0 && (
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                    {creationSubtasks.map((st, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-2 p-1.5 px-2.5 rounded-lg bg-secondary/50 border border-border/60 text-xs group"
+                      >
+                        <span className="truncate text-foreground flex-1 flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                          <span className="truncate">{st}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCreationSubtask(idx)}
+                          className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubtaskInput}
+                    onChange={(e) => setNewSubtaskInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCreationSubtask();
+                      }
+                    }}
+                    placeholder="Add checklist item (press Enter)..."
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAddCreationSubtask()}
+                    disabled={!newSubtaskInput.trim()}
+                    className="h-8 text-xs px-2.5 shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
+              </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setIsTaskDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={saveTask}
+              disabled={!newTask.title.trim()}
+              className="text-xs"
+            >
+              {editingTask ? "Save Changes" : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Project Settings Dialog */}
+      <Dialog open={isProjectSettingsOpen} onOpenChange={setIsProjectSettingsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">Project Settings</DialogTitle>
+            <DialogDescription className="text-xs">
+              Update workspace board details, color badge, and status.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="proj-name" className="text-xs font-medium">Project Name</Label>
+              <Input
+                id="proj-name"
+                value={projectForm.name}
+                onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="proj-desc" className="text-xs font-medium">Description</Label>
+              <Input
+                id="proj-desc"
+                value={projectForm.description}
+                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Status</Label>
+                <Select
+                  value={projectForm.status}
+                  onValueChange={(val) => setProjectForm({ ...projectForm, status: val })}
+                >
+                  <SelectTrigger className="h-9 text-xs capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Theme Color</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={projectForm.color}
+                    onChange={(e) => setProjectForm({ ...projectForm, color: e.target.value })}
+                    className="h-9 w-12 rounded cursor-pointer border bg-transparent p-0.5"
+                  />
+                  <Input
+                    value={projectForm.color}
+                    onChange={(e) => setProjectForm({ ...projectForm, color: e.target.value })}
+                    className="h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setIsProjectSettingsOpen(false)}>
               Cancel
             </Button>
             <Button
-              onClick={saveTask}
-              disabled={!newTask.title.trim()}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
+              size="sm"
+              disabled={!projectForm.name.trim() || isSavingProject}
+              onClick={updateProjectDetails}
+              className="text-xs"
             >
-              {editingTask ? "Save Changes" : "Create Task"}
+              {isSavingProject ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Modal */}
+      <Dialog open={isDeleteProjectOpen} onOpenChange={setIsDeleteProjectOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <DialogTitle className="text-sm font-semibold">Delete Project?</DialogTitle>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+              Are you sure you want to delete &ldquo;{project.name}&rdquo;? All tasks, columns, and history inside this workspace will be deleted.
+            </p>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsDeleteProjectOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" size="sm" onClick={deleteCurrentProject}>
+              Confirm Delete
             </Button>
           </DialogFooter>
         </DialogContent>

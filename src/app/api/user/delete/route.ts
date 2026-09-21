@@ -3,31 +3,19 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-export async function PATCH(req: Request) {
+export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { name, email, image } = body;
-
-    const user = await prisma.user.update({
+    // Cascade delete user
+    await prisma.user.delete({
       where: { id: session.user.id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(email !== undefined && { email }),
-        ...(image !== undefined && { image }),
-      },
     });
 
-    return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      image: user.image,
-    });
+    return NextResponse.json({ success: true, message: "Account deleted successfully." });
   } catch (error) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

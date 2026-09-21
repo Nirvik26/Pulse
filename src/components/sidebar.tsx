@@ -41,36 +41,48 @@ export function Sidebar({ projects }: SidebarProps) {
       icon: LayoutDashboard,
       href: "/dashboard",
       active: pathname === "/dashboard",
+      color: "text-indigo-500",
+      activeBg: "bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 font-semibold",
     },
     {
       label: "All Projects",
       icon: FolderKanban,
       href: "/dashboard/projects",
       active: pathname.startsWith("/dashboard/projects"),
+      color: "text-cyan-500",
+      activeBg: "bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 font-semibold",
     },
     {
       label: "Calendar",
       icon: Calendar,
       href: "/dashboard/calendar",
       active: pathname === "/dashboard/calendar",
+      color: "text-amber-500",
+      activeBg: "bg-amber-500/10 text-amber-500 dark:text-amber-400 font-semibold",
     },
     {
       label: "Activity Log",
       icon: Activity,
       href: "/dashboard/activity",
       active: pathname === "/dashboard/activity",
+      color: "text-emerald-500",
+      activeBg: "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 font-semibold",
     },
     {
       label: "Notifications",
       icon: Bell,
       href: "/dashboard/notifications",
       active: pathname === "/dashboard/notifications",
+      color: "text-rose-500",
+      activeBg: "bg-rose-500/10 text-rose-500 dark:text-rose-400 font-semibold",
     },
     {
       label: "Settings",
       icon: Settings,
       href: "/dashboard/settings",
       active: pathname === "/dashboard/settings",
+      color: "text-slate-400",
+      activeBg: "bg-primary/10 text-primary font-semibold",
     },
   ];
 
@@ -85,14 +97,14 @@ export function Sidebar({ projects }: SidebarProps) {
       <div className="flex items-center justify-between p-4 border-b">
         {!isCollapsed ? (
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <PulseMark className="h-8 w-8" />
+            <PulseMark className="h-7 w-7" />
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-lg font-black tracking-tight bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-lg font-bold tracking-tight text-foreground">
                   Pulse
                 </span>
-                <Badge variant="outline" className="text-[10px] px-1 py-0 border-violet-500/30 text-violet-500 font-mono">
-                  SaaS
+                <Badge variant="outline" className="text-[10px] px-1 py-0 font-mono">
+                  Sprints
                 </Badge>
               </div>
               <span className="text-[10px] text-muted-foreground font-medium -mt-1">
@@ -102,7 +114,7 @@ export function Sidebar({ projects }: SidebarProps) {
           </Link>
         ) : (
           <Link href="/dashboard" className="mx-auto">
-            <PulseMark className="h-8 w-8" />
+            <PulseMark className="h-7 w-7" />
           </Link>
         )}
         <Button
@@ -137,14 +149,14 @@ export function Sidebar({ projects }: SidebarProps) {
                 variant={route.active ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start h-9 font-medium transition-colors",
-                  route.active && "bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold",
+                  route.active ? route.activeBg : "hover:bg-secondary/60 text-muted-foreground hover:text-foreground",
                   isCollapsed && "justify-center px-0"
                 )}
               >
                 <route.icon
                   className={cn(
                     "h-4 w-4 shrink-0",
-                    route.active ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground",
+                    route.active ? route.color : "text-muted-foreground/70 group-hover:text-foreground",
                     !isCollapsed && "mr-2.5"
                   )}
                 />

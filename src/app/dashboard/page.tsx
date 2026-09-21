@@ -84,7 +84,7 @@ interface Activity {
   createdAt: string;
 }
 
-const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ec4899"];
+const COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -98,7 +98,7 @@ export default function DashboardPage() {
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
-    color: "#8b5cf6",
+    color: "#6366f1",
   });
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export default function DashboardPage() {
       if (res.ok) {
         toast({ title: "Workspace Created", description: `Project "${newProject.name}" is ready.` });
         setIsDialogOpen(false);
-        setNewProject({ name: "", description: "", color: "#8b5cf6" });
+        setNewProject({ name: "", description: "", color: "#6366f1" });
         fetchData();
       }
     } catch (error) {
@@ -156,8 +156,8 @@ export default function DashboardPage() {
   const healthScore = Math.min(100, Math.max(40, completionRate + (inProgressTasks > 0 ? 15 : 0)));
 
   const statusData = [
-    { name: "To Do", value: todoTasks, color: "#94a3b8" },
-    { name: "In Progress", value: inProgressTasks, color: "#3b82f6" },
+    { name: "To Do", value: todoTasks, color: "#6366f1" },
+    { name: "In Progress", value: inProgressTasks, color: "#f59e0b" },
     { name: "Done", value: doneTasks, color: "#10b981" },
   ];
 
@@ -181,27 +181,24 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <div className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
-        <p className="text-xs text-muted-foreground font-medium">Gathering workspace telemetry...</p>
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <p className="text-xs text-muted-foreground font-medium">Loading workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pb-20 space-y-6 max-w-7xl mx-auto">
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-600/10 via-purple-600/5 to-background p-6 shadow-sm">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-xl border bg-card p-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Welcome back, {session?.user?.name?.split(" ")[0] || "Engineer"}
-              </h1>
-              <span className="text-xl">⚡</span>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              Welcome back, {session?.user?.name?.split(" ")[0] || "User"}
+            </h1>
             <p className="text-sm text-muted-foreground">
               You have <span className="font-semibold text-foreground">{inProgressTasks} active tasks</span> in flight across{" "}
-              <span className="font-semibold text-foreground">{projects.length} workspaces</span>.
+              <span className="font-semibold text-foreground">{projects.length} workspace projects</span>.
             </p>
           </div>
 
@@ -211,22 +208,17 @@ export default function DashboardPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                const event = new KeyboardEvent("keydown", {
-                  key: "k",
-                  metaKey: true,
-                  bubbles: true,
-                });
-                window.dispatchEvent(event);
+                window.dispatchEvent(new CustomEvent("open-command-palette"));
               }}
-              className="gap-2 text-xs border-violet-500/30"
+              className="gap-2 text-xs"
             >
-              <Command className="h-3.5 w-3.5 text-violet-500" />
-              <span>⌘K Spotlight</span>
+              <Command className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Ctrl+K Spotlight</span>
             </Button>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5 text-xs shadow-md">
+                <Button size="sm" className="gap-1.5 text-xs">
                   <Plus className="h-4 w-4" /> New Workspace
                 </Button>
               </DialogTrigger>
@@ -267,7 +259,7 @@ export default function DashboardPage() {
                           type="button"
                           onClick={() => setNewProject({ ...newProject, color })}
                           className={`h-7 w-7 rounded-full transition-transform ${
-                            newProject.color === color ? "ring-2 ring-violet-500 ring-offset-2 scale-110" : ""
+                            newProject.color === color ? "ring-2 ring-primary ring-offset-2 scale-110" : ""
                           }`}
                           style={{ backgroundColor: color }}
                         />
@@ -283,7 +275,6 @@ export default function DashboardPage() {
                   <Button
                     onClick={createProject}
                     disabled={!newProject.name.trim()}
-                    className="bg-violet-600 hover:bg-violet-700 text-white"
                   >
                     Create Workspace
                   </Button>
@@ -296,13 +287,14 @@ export default function DashboardPage() {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm hover:shadow-md transition-shadow">
+        {/* Workspaces Card: Electric Indigo Accent */}
+        <Card className="bg-card border-border shadow-xs hover:border-indigo-500/50 hover:shadow-indigo-500/5 transition-all bg-gradient-to-br from-card via-card to-indigo-500/[0.04]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Workspaces
               </span>
-              <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500">
+              <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
                 <FolderKanban className="h-4 w-4" />
               </div>
             </div>
@@ -315,13 +307,14 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm hover:shadow-md transition-shadow">
+        {/* Total Tasks Card: Vibrant Cyan Accent */}
+        <Card className="bg-card border-border shadow-xs hover:border-cyan-500/50 hover:shadow-cyan-500/5 transition-all bg-gradient-to-br from-card via-card to-cyan-500/[0.04]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Total Tasks
               </span>
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
                 <CheckSquare className="h-4 w-4" />
               </div>
             </div>
@@ -334,18 +327,19 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm hover:shadow-md transition-shadow">
+        {/* In Progress Card: Radiant Amber Accent */}
+        <Card className="bg-card border-border shadow-xs hover:border-amber-500/50 hover:shadow-amber-500/5 transition-all bg-gradient-to-br from-card via-card to-amber-500/[0.04]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 In Progress
               </span>
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
                 <Clock className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-2xl font-bold">{inProgressTasks}</div>
+              <div className="text-2xl font-bold text-amber-500">{inProgressTasks}</div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {highPriorityTasks} marked High Priority
               </p>
@@ -353,13 +347,14 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm hover:shadow-md transition-shadow">
+        {/* Health Score Card: Mint Emerald Accent */}
+        <Card className="bg-card border-border shadow-xs hover:border-emerald-500/50 hover:shadow-emerald-500/5 transition-all bg-gradient-to-br from-card via-card to-emerald-500/[0.04]">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Health Score
               </span>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
                 <ShieldCheck className="h-4 w-4" />
               </div>
             </div>
@@ -376,19 +371,19 @@ export default function DashboardPage() {
       {/* Analytics Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sprint Velocity Area Chart */}
-        <Card className="lg:col-span-2 bg-card/70 border-violet-500/20 shadow-sm">
+        <Card className="lg:col-span-2 bg-card border-border shadow-xs">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-violet-500" />
+                  <TrendingUp className="h-4 w-4 text-indigo-500" />
                   Weekly Sprint Completion Velocity
                 </CardTitle>
                 <CardDescription className="text-xs">
                   Accumulated completed objectives over past sprint
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="text-[11px] font-mono text-violet-500">
+              <Badge variant="outline" className="text-[11px] font-mono border-indigo-500/30 text-indigo-400">
                 Live Data
               </Badge>
             </div>
@@ -399,8 +394,9 @@ export default function DashboardPage() {
                 <AreaChart data={velocityData}>
                   <defs>
                     <linearGradient id="velocityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0} />
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                      <stop offset="60%" stopColor="#06b6d4" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
@@ -412,13 +408,25 @@ export default function DashboardPage() {
                       borderColor: "hsl(var(--border))",
                       borderRadius: "8px",
                       fontSize: "12px",
+                      color: "hsl(var(--foreground))",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
+                    }}
+                    itemStyle={{
+                      color: "hsl(var(--foreground))",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                    }}
+                    labelStyle={{
+                      color: "hsl(var(--foreground))",
+                      fontSize: "12px",
+                      fontWeight: "600",
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="tasks"
                     name="Completed Tasks"
-                    stroke="#8b5cf6"
+                    stroke="#6366f1"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#velocityGrad)"
@@ -430,10 +438,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* Task Status Donut Distribution */}
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm flex flex-col">
+        <Card className="bg-card border-border shadow-xs flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Target className="h-4 w-4 text-violet-500" />
+              <Target className="h-4 w-4 text-emerald-500" />
               Task Status Distribution
             </CardTitle>
             <CardDescription className="text-xs">Current pipeline allocation</CardDescription>
@@ -465,17 +473,27 @@ export default function DashboardPage() {
                           borderColor: "hsl(var(--border))",
                           borderRadius: "8px",
                           fontSize: "12px",
+                          color: "hsl(var(--foreground))",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
+                        }}
+                        itemStyle={{
+                          color: "hsl(var(--foreground))",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                        }}
+                        labelStyle={{
+                          color: "hsl(var(--foreground))",
                         }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+                <div className="flex items-center justify-center gap-4 mt-2 text-xs flex-wrap px-2">
                   {statusData.map((item) => (
                     <div key={item.name} className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                       <span className="text-muted-foreground">{item.name}:</span>
-                      <span className="font-semibold">{item.value}</span>
+                      <span className="font-semibold text-foreground">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -488,14 +506,14 @@ export default function DashboardPage() {
       {/* Projects Grid & Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workspaces List */}
-        <Card className="lg:col-span-2 bg-card/70 border-violet-500/20 shadow-sm">
+        <Card className="lg:col-span-2 bg-card border-border shadow-xs">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold">Active Workspaces</CardTitle>
               <CardDescription className="text-xs">Quick jump into your project boards</CardDescription>
             </div>
             <Link href="/dashboard/projects">
-              <Button variant="ghost" size="sm" className="text-xs gap-1 text-violet-500">
+              <Button variant="ghost" size="sm" className="text-xs gap-1 text-primary">
                 View All <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
@@ -510,16 +528,16 @@ export default function DashboardPage() {
                 <Link
                   key={project.id}
                   href={`/dashboard/projects/${project.id}`}
-                  className="block p-3.5 rounded-xl border hover:border-violet-500/40 bg-secondary/20 hover:bg-secondary/40 transition-all group"
+                  className="block p-3.5 rounded-xl border border-border/70 hover:border-primary/50 bg-secondary/20 hover:bg-secondary/40 transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
                         className="h-3.5 w-3.5 rounded-full shrink-0"
-                        style={{ backgroundColor: project.color || "#8b5cf6" }}
+                        style={{ backgroundColor: project.color || "#3b82f6" }}
                       />
                       <div>
-                        <h4 className="font-semibold text-sm group-hover:text-violet-500 transition-colors">
+                        <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
                           {project.name}
                         </h4>
                         {project.description && (
@@ -543,17 +561,17 @@ export default function DashboardPage() {
         </Card>
 
         {/* Live Activity Stream */}
-        <Card className="bg-card/70 border-violet-500/20 shadow-sm">
+        <Card className="bg-card border-border shadow-xs">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ActivityIcon className="h-4 w-4 text-violet-500" />
+                <ActivityIcon className="h-4 w-4 text-primary" />
                 Audit Trail
               </CardTitle>
               <CardDescription className="text-xs">Latest team actions</CardDescription>
             </div>
             <Link href="/dashboard/activity">
-              <Button variant="ghost" size="sm" className="text-xs gap-1 text-violet-500">
+              <Button variant="ghost" size="sm" className="text-xs gap-1 text-primary">
                 Full Log
               </Button>
             </Link>
@@ -565,8 +583,8 @@ export default function DashboardPage() {
               </div>
             ) : (
               activities.slice(0, 5).map((act) => (
-                <div key={act.id} className="flex items-start gap-2.5 text-xs pb-2 border-b last:border-0">
-                  <div className="h-2 w-2 rounded-full bg-violet-500 mt-1.5 shrink-0" />
+                <div key={act.id} className="flex items-start gap-2.5 text-xs pb-2 border-b border-border/50 last:border-0">
+                  <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{act.message}</p>
                     <span className="text-[10px] text-muted-foreground">

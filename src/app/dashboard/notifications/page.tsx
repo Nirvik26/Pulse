@@ -129,7 +129,7 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function NotificationsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Bell className="h-7 w-7 text-violet-500" />
+            <Bell className="h-7 w-7 text-primary" />
             Notifications Center
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -194,7 +194,7 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      <Card className="bg-card/70 border-violet-500/20 shadow-sm overflow-hidden">
+      <Card className="bg-card border-border shadow-xs overflow-hidden">
         <CardContent className="p-0">
           {filteredNotifications.length === 0 ? (
             <div className="text-center py-16 space-y-2">
@@ -208,10 +208,10 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`flex items-start gap-4 p-4 hover:bg-secondary/30 transition-colors ${
-                    !notification.read ? "bg-violet-500/5" : ""
+                    !notification.read ? "bg-primary/5" : ""
                   }`}
                 >
-                  <div className="p-1.5 rounded-xl bg-secondary/50 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded-lg bg-secondary/50 shrink-0 mt-0.5">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -226,7 +226,7 @@ export default function NotificationsPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {!notification.read && (
-                          <Badge variant="secondary" className="text-[10px] bg-violet-500/10 text-violet-600 border-violet-500/20">
+                          <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
                             New
                           </Badge>
                         )}
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => markAsRead(notification.id)}
-                          className="h-7 text-xs text-violet-600 hover:text-violet-700"
+                          className="h-7 text-xs text-primary hover:text-primary/80"
                         >
                           Mark as read
                         </Button>

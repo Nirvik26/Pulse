@@ -83,40 +83,36 @@ export function Header({
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              const event = new KeyboardEvent("keydown", {
-                key: "k",
-                metaKey: true,
-                bubbles: true,
-              });
-              window.dispatchEvent(event);
+              window.dispatchEvent(new CustomEvent("open-command-palette"));
             }}
             className="flex items-center gap-3 px-3 py-1.5 h-9 w-64 md:w-80 rounded-lg border bg-background/80 hover:bg-secondary/60 text-muted-foreground hover:text-foreground text-sm transition-all shadow-sm group"
           >
-            <Search className="h-4 w-4 text-muted-foreground group-hover:text-violet-500 transition-colors" />
+            <Search className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="flex-1 text-left text-xs font-normal">Search tasks, projects, actions...</span>
             <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border bg-muted text-muted-foreground">
-              <Command className="h-3 w-3" />K
+              Ctrl+K
             </kbd>
           </button>
-
-          {/* Voice Input Mic */}
-          <VoiceInput onTranscript={handleVoiceTranscript} />
         </div>
 
         {/* Action icons & profile */}
-        <div className="flex items-center gap-3">
-          {/* Live Sync Telemetry */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-medium" title="Prisma ORM Real-time Database Sync">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Sync: {latency}ms</span>
-          </div>
+        <div className="flex items-center gap-2.5">
+          {/* Quick Shortcuts Trigger */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const event = new KeyboardEvent("keydown", { key: "?", bubbles: true });
+              window.dispatchEvent(event);
+            }}
+            className="hidden md:flex h-8 px-2 text-xs font-mono text-muted-foreground hover:text-foreground gap-1"
+            title="Press ? for keyboard shortcuts"
+          >
+            <kbd className="px-1 py-0.5 rounded border bg-muted text-[10px]">?</kbd>
+            <span className="text-[11px]">Shortcuts</span>
+          </Button>
 
-          {/* Quick AI badge */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-[11px] text-violet-500 font-medium">
-            <Sparkles className="h-3.5 w-3.5" />
-            Pulse AI Active
-          </div>
-
+          {/* Theme Switcher */}
           <Button
             variant="ghost"
             size="icon"
@@ -127,25 +123,27 @@ export function Header({
             {theme === "dark" ? (
               <Sun className="h-4 w-4 text-amber-400" />
             ) : (
-              <Moon className="h-4 w-4 text-slate-700" />
+              <Moon className="h-4 w-4 text-slate-600" />
             )}
           </Button>
 
+          {/* Notifications Bell */}
           <Link href="/dashboard/notifications">
-            <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg">
+            <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg" title="Notifications">
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute 1 top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-background" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-background" />
               )}
             </Button>
           </Link>
 
+          {/* User Profile Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-2 ring-violet-500/20 hover:ring-violet-500/50 transition-all p-0">
-                <Avatar className="h-9 w-9">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full border hover:border-primary transition-all p-0">
+                <Avatar className="h-8 w-8">
                   <AvatarImage src={session?.user?.image || ""} />
-                  <AvatarFallback className="bg-gradient-to-tr from-violet-600 to-indigo-600 text-white font-semibold text-xs">
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
                     {session?.user?.name?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -167,7 +165,7 @@ export function Header({
               <DropdownMenuSeparator />
               <Link href="/dashboard">
                 <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4 text-violet-500" />
+                  <User className="mr-2 h-4 w-4 text-primary" />
                   Dashboard
                 </DropdownMenuItem>
               </Link>

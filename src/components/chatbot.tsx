@@ -22,6 +22,7 @@ import {
   ListTodo,
 } from "lucide-react";
 import { VoiceInput } from "./voice-input";
+import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
 interface Message {
   id: string;
@@ -31,21 +32,21 @@ interface Message {
 }
 
 const suggestedPrompts = [
-  { label: "🎯 Task Breakdown", prompt: "Break down the feature: User Authentication with 2FA and OAuth" },
-  { label: "📊 Sprint Health", prompt: "Give me an audit of my sprint health and workload velocity" },
-  { label: "📋 Daily Standup", prompt: "Generate my daily standup summary based on recent tasks" },
-  { label: "⚡ Power Shortcuts", prompt: "Show me all keyboard shortcuts and productivity tips" },
+  { label: "Task Breakdown", prompt: "Break down the feature: User Authentication with 2FA and OAuth" },
+  { label: "Sprint Health", prompt: "Audit our sprint health and workload velocity" },
+  { label: "Daily Standup", prompt: "Generate my daily standup summary based on recent tasks" },
+  { label: "Keyboard Shortcuts", prompt: "Show me keyboard shortcuts and productivity tips" },
 ];
 
 export function ChatBot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isCopilotOpen, setCopilotOpen } = useWorkspaceStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
-        "👋 **Welcome to Pulse AI Copilot 2.0!**\n\nI can decompose project goals into subtasks, audit your sprint health, draft standup reports, and answer workflow questions. How can I assist your productivity today?",
+        "Hello! I'm your sprint copilot. I can help decompose epics into backlog tasks, audit sprint workload, or draft standup summaries. How can I assist?",
       timestamp: new Date(),
     },
   ]);
@@ -63,10 +64,10 @@ export function ChatBot() {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isCopilotOpen) {
       setTimeout(() => inputRef.current?.focus(), 150);
     }
-  }, [isOpen]);
+  }, [isCopilotOpen]);
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -143,47 +144,39 @@ export function ChatBot() {
   return (
     <>
       {/* Floating Chat Trigger Button */}
-      {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 p-0 z-40 group transition-all duration-300 hover:scale-105"
+      {!isCopilotOpen && (
+        <button
+          onClick={() => setCopilotOpen(true)}
+          className="fixed bottom-5 right-5 h-9 px-3 rounded-full shadow-lg border border-border/80 bg-card/95 backdrop-blur-md hover:bg-secondary text-foreground flex items-center gap-2 text-xs font-medium z-40 transition-all hover:border-primary/50 group"
+          title="Open Sprint Copilot"
         >
-          <div className="relative flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-white group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-          </div>
-        </Button>
+          <Bot className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+          <span className="hidden sm:inline">Copilot</span>
+        </button>
       )}
 
       {/* Chat Window */}
-      {isOpen && (
+      {isCopilotOpen && (
         <div
           className={`fixed z-50 transition-all duration-300 ease-in-out flex flex-col ${
             isExpanded
               ? "inset-4 md:inset-10 rounded-2xl"
-              : "bottom-6 right-6 w-full max-w-[420px] h-[600px] rounded-2xl"
-          } bg-card/95 backdrop-blur-xl border border-violet-500/30 shadow-2xl overflow-hidden`}
+              : "bottom-5 right-5 w-full max-w-[400px] h-[550px] rounded-2xl"
+          } bg-card border shadow-2xl overflow-hidden`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-violet-600 to-purple-700 text-white">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-card text-foreground">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                <Bot className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-sm">Pulse AI Copilot</h3>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0 text-[10px] px-1.5 py-0">
-                    v2.0
+                  <h3 className="font-semibold text-xs">Sprint Copilot</h3>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono">
+                    Assistant
                   </Badge>
                 </div>
-                <p className="text-[11px] text-white/80 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Context-Aware Assistant
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -191,37 +184,37 @@ export function ChatBot() {
                 variant="ghost"
                 size="icon"
                 onClick={clearChat}
-                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
                 title="Clear conversation"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 hidden md:flex"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground hidden md:flex"
               >
-                {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(false)}
-                className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10"
+                onClick={() => setCopilotOpen(false)}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
 
           {/* Quick Action Chips */}
-          <div className="flex items-center gap-1.5 px-3 py-2 bg-secondary/40 border-b overflow-x-auto no-scrollbar text-xs">
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/30 border-b overflow-x-auto no-scrollbar text-xs">
             {suggestedPrompts.map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => sendMessage(p.prompt)}
-                className="shrink-0 px-2.5 py-1 rounded-full bg-background border hover:border-violet-500 hover:text-violet-500 transition-colors font-medium text-[11px]"
+                className="shrink-0 px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-[11px] font-medium transition-colors"
               >
                 {p.label}
               </button>
@@ -230,32 +223,32 @@ export function ChatBot() {
 
           {/* Messages Area */}
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${
+                  className={`flex gap-2.5 ${
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   {message.role === "assistant" && (
-                    <Avatar className="h-7 w-7 mt-0.5 border border-violet-500/30 shrink-0">
-                      <AvatarFallback className="bg-violet-500/10 text-violet-600 text-xs">
-                        <Bot className="h-4 w-4" />
+                    <Avatar className="h-6 w-6 mt-0.5 border shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                        <Bot className="h-3.5 w-3.5" />
                       </AvatarFallback>
                     </Avatar>
                   )}
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                    className={`max-w-[85%] rounded-xl px-3.5 py-2 text-xs leading-relaxed ${
                       message.role === "user"
-                        ? "bg-violet-600 text-white rounded-tr-none shadow-md"
-                        : "bg-secondary/70 border rounded-tl-none prose-sm dark:prose-invert"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary/70 border text-foreground"
                     }`}
                   >
                     <div className="whitespace-pre-wrap">{message.content}</div>
                     <div
-                      className={`text-[10px] mt-1.5 text-right ${
-                        message.role === "user" ? "text-white/70" : "text-muted-foreground"
+                      className={`text-[9px] mt-1 text-right ${
+                        message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
                       }`}
                     >
                       {new Date(message.timestamp).toLocaleTimeString([], {
@@ -264,22 +257,15 @@ export function ChatBot() {
                       })}
                     </div>
                   </div>
-                  {message.role === "user" && (
-                    <Avatar className="h-7 w-7 mt-0.5 border shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
                 </div>
               ))}
 
               {isLoading && (
-                <div className="flex gap-3 items-center text-muted-foreground text-xs py-2">
-                  <div className="h-7 w-7 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="flex gap-2.5 items-center text-muted-foreground text-xs py-1">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   </div>
-                  <span>Pulse AI is analyzing and generating response...</span>
+                  <span>Thinking...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -292,30 +278,23 @@ export function ChatBot() {
               e.preventDefault();
               sendMessage(input);
             }}
-            className="p-3 border-t bg-card/60 flex items-center gap-2"
+            className="p-2.5 border-t bg-card flex items-center gap-2"
           >
             <Input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Copilot (e.g. 'Break down payment flow', 'Check sprint health')..."
-              className="flex-1 text-sm bg-background/80"
+              placeholder="Ask Copilot..."
+              className="flex-1 text-xs h-8 bg-background"
               disabled={isLoading}
-            />
-            <VoiceInput
-              onTranscript={(transcript) => {
-                setInput(transcript);
-                sendMessage(transcript);
-              }}
-              className="h-9 w-9 shrink-0"
             />
             <Button
               type="submit"
               size="icon"
               disabled={!input.trim() || isLoading}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg shrink-0 h-9 w-9"
+              className="h-8 w-8 rounded-lg shrink-0 text-xs"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3.5 w-3.5" />
             </Button>
           </form>
         </div>

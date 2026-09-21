@@ -65,14 +65,14 @@ export function ShortcutsModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-lg p-6 bg-card/95 backdrop-blur-xl border-violet-500/30 shadow-2xl">
+      <DialogContent className="max-w-lg p-6 bg-card border-border shadow-2xl">
         <DialogHeader className="space-y-1">
-          <div className="flex items-center gap-2 text-violet-500">
+          <div className="flex items-center gap-2 text-primary">
             <Keyboard className="h-5 w-5" />
             <DialogTitle className="text-lg font-bold">Keyboard Shortcuts</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Power-user keybindings designed for maximum engineering velocity
+            Power-user keybindings designed for keyboard-first navigation
           </DialogDescription>
         </DialogHeader>
 
@@ -108,9 +108,7 @@ export function ShortcutsModal() {
 
         <div className="flex items-center justify-between pt-2 border-t text-[11px] text-muted-foreground">
           <span>Press <kbd className="px-1 py-0.5 rounded bg-muted border font-mono">?</kbd> anytime to reopen</span>
-          <span className="flex items-center gap-1 text-violet-500 font-medium">
-            <Sparkles className="h-3 w-3" /> Pulse v2.0
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">Pulse Workspace</span>
         </div>
       </DialogContent>
     </Dialog>

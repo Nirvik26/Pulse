@@ -50,7 +50,7 @@ export function CommandPalette({
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  // Listen for Cmd+K / Ctrl+K
+  // Listen for Cmd+K / Ctrl+K and custom event
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -58,8 +58,18 @@ export function CommandPalette({
         setIsOpen((prev) => !prev);
       }
     };
+
+    const handleCustomOpen = () => {
+      setIsOpen((prev) => !prev);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-command-palette", handleCustomOpen);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-command-palette", handleCustomOpen);
+    };
   }, []);
 
   // Fetch quick tasks for instant search
@@ -82,11 +92,26 @@ export function CommandPalette({
 
   const defaultItems: SearchItem[] = [
     {
+      id: "action-new-project",
+      title: "Create New Project",
+      subtitle: "Start a fresh workspace board",
+      type: "action",
+      icon: <Plus className="h-4 w-4 text-primary" />,
+      action: () => {
+        setIsOpen(false);
+        if (onOpenNewProject) {
+          onOpenNewProject();
+        } else {
+          navigate("/dashboard/projects");
+        }
+      },
+    },
+    {
       id: "page-dashboard",
       title: "Dashboard Overview",
       subtitle: "Analytics, workload, and quick stats",
       type: "page",
-      icon: <LayoutDashboard className="h-4 w-4 text-violet-500" />,
+      icon: <LayoutDashboard className="h-4 w-4 text-primary" />,
       action: () => navigate("/dashboard"),
     },
     {
@@ -126,7 +151,7 @@ export function CommandPalette({
       title: "Settings & Preferences",
       subtitle: "User profile, appearance, and workspace settings",
       type: "page",
-      icon: <Settings className="h-4 w-4 text-slate-500" />,
+      icon: <Settings className="h-4 w-4 text-slate-400" />,
       action: () => navigate("/dashboard/settings"),
     },
     {
@@ -134,7 +159,7 @@ export function CommandPalette({
       title: `Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`,
       subtitle: "Toggle application visual appearance theme",
       type: "action",
-      icon: theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-violet-400" />,
+      icon: theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-blue-400" />,
       action: () => {
         setTheme(theme === "dark" ? "light" : "dark");
         setIsOpen(false);
@@ -185,18 +210,18 @@ export function CommandPalette({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="p-0 max-w-xl overflow-hidden border-violet-500/20 shadow-2xl bg-card/95 backdrop-blur-xl">
+      <DialogContent className="p-0 max-w-xl overflow-hidden border shadow-2xl bg-card">
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b">
-          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command, project, task, or page (⌘K)..."
+            placeholder="Type a command, project, task, or page (Ctrl+K)..."
             className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground outline-none"
             autoFocus
           />
-          <Badge variant="secondary" className="font-mono text-xs text-muted-foreground">
+          <Badge variant="secondary" className="font-mono text-[10px] text-muted-foreground px-1.5 py-0.5">
             ESC
           </Badge>
         </div>
@@ -215,18 +240,18 @@ export function CommandPalette({
                 onClick={() => {
                   item.action();
                 }}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-secondary/70 transition-colors group text-sm"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-secondary transition-colors group text-sm"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-1.5 rounded-md bg-secondary/80 shrink-0">
+                  <div className="p-1.5 rounded-md bg-secondary shrink-0">
                     {item.icon}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-foreground truncate group-hover:text-violet-500 transition-colors">
+                    <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors text-xs">
                       {item.title}
                     </p>
                     {item.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         {item.subtitle}
                       </p>
                     )}
@@ -234,11 +259,11 @@ export function CommandPalette({
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-2">
                   {item.badge && (
-                    <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5">
+                    <Badge variant="outline" className="text-[9px] uppercase font-mono px-1.5">
                       {item.badge}
                     </Badge>
                   )}
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </button>
             ))
@@ -246,15 +271,14 @@ export function CommandPalette({
         </div>
 
         {/* Footer info */}
-        <div className="flex items-center justify-between px-4 py-2 bg-secondary/30 border-t text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-t text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>Navigation:</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-muted border font-mono">↑↓</kbd>
-            <kbd className="px-1.5 py-0.5 rounded bg-muted border font-mono">↵</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-background border font-mono text-[10px]">↑↓</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-background border font-mono text-[10px]">↵</kbd>
           </div>
-          <div className="flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-violet-500" />
-            <span>Pulse Spotlight</span>
+          <div className="flex items-center gap-1 font-mono text-[10px]">
+            <span>Pulse Workspace</span>
           </div>
         </div>
       </DialogContent>

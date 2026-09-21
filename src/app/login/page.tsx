@@ -98,11 +98,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/30 p-4 relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <Card className="w-full max-w-md border-violet-500/20 shadow-2xl bg-card/95 backdrop-blur-xl relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <Card className="w-full max-w-md border-border shadow-xl bg-card relative z-10">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <PulseMark className="h-10 w-10" />
@@ -114,20 +111,19 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Instant 1-Click Recruiter Sandbox */}
-          <div className="p-3.5 rounded-xl bg-gradient-to-r from-violet-600/10 via-purple-600/10 to-indigo-600/10 border border-violet-500/30 text-center space-y-2">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-violet-500">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Recruiter / Portfolio Sandbox</span>
+          {/* Quick Demo Sandbox */}
+          <div className="p-3.5 rounded-xl bg-secondary/40 border border-border/80 text-center space-y-2">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-foreground">
+              <span>Interactive Demo Sandbox</span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Experience the full app with preloaded realistic projects and AI features in one click.
+              Experience the full workspace with preloaded projects and tasks in one click.
             </p>
             <Button
               type="button"
               onClick={handleDemoLogin}
               disabled={isDemoLoading || isLoading}
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-medium text-xs h-9 shadow-md gap-2"
+              className="w-full font-medium text-xs h-9 shadow-xs gap-2"
             >
               {isDemoLoading ? (
                 <>
@@ -177,7 +173,7 @@ export default function LoginPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-violet-600 hover:bg-violet-700 h-9 text-sm font-semibold"
+              className="w-full h-9 text-sm font-semibold"
               disabled={isLoading || isDemoLoading}
             >
               {isLoading ? (
@@ -190,7 +186,7 @@ export default function LoginPage() {
 
           <p className="text-center text-xs text-muted-foreground pt-2">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-violet-500 font-semibold hover:underline">
+            <Link href="/register" className="text-primary font-semibold hover:underline">
               Create an account
             </Link>
           </p>

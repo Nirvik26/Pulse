@@ -1,103 +1,78 @@
 "use client";
 
+import confetti from "canvas-confetti";
+
+function playCelebrationChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    // Harmonic upward major arpeggio chime (C5 -> E5 -> G5 -> C6)
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.07 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.07);
+      osc.stop(now + idx * 0.07 + 0.4);
+    });
+  } catch (e) {
+    // Audio autoplay restrictions or unsupported
+  }
+}
+
 export function fireConfetti() {
   if (typeof window === "undefined") return;
 
-  const canvas = document.createElement("canvas");
-  canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
-  canvas.style.width = "100vw";
-  canvas.style.height = "100vh";
-  canvas.style.pointerEvents = "none";
-  canvas.style.zIndex = "99999";
-  document.body.appendChild(canvas);
+  playCelebrationChime();
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    if (document.body.contains(canvas)) document.body.removeChild(canvas);
-    return;
-  }
+  const count = 150;
+  const defaults = {
+    origin: { y: 0.7 },
+    zIndex: 99999,
+  };
 
-  canvas.width = window.innerWidth * window.devicePixelRatio;
-  canvas.height = window.innerHeight * window.devicePixelRatio;
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-  const colors = ["#8b5cf6", "#ec4899", "#3b82f6", "#10b981", "#f59e0b", "#6366f1"];
-  const particles: Array<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    vx: number;
-    vy: number;
-    color: string;
-    rotation: number;
-    vRot: number;
-    alpha: number;
-  }> = [];
-
-  const particleCount = 70;
-  const startX = window.innerWidth / 2;
-  const startY = window.innerHeight * 0.4;
-
-  for (let i = 0; i < particleCount; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 9 + 4;
-    particles.push({
-      x: startX,
-      y: startY,
-      w: Math.random() * 8 + 5,
-      h: Math.random() * 5 + 3,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: Math.random() * 360,
-      vRot: (Math.random() - 0.5) * 12,
-      alpha: 1,
+  function fire(particleRatio: number, opts: confetti.Options) {
+    confetti({
+      ...defaults,
+      ...opts,
+      particleCount: Math.floor(count * particleRatio),
     });
   }
 
-  let animationFrame: number;
-  const gravity = 0.22;
-  const drag = 0.985;
-  const startTime = Date.now();
-
-  function render() {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-    let activeParticles = 0;
-
-    for (const p of particles) {
-      p.vx *= drag;
-      p.vy = p.vy * drag + gravity;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.rotation += p.vRot;
-      p.alpha -= 0.012;
-
-      if (p.alpha > 0) {
-        activeParticles++;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
-        ctx.globalAlpha = Math.max(0, p.alpha);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
-      }
-    }
-
-    if (activeParticles > 0 && Date.now() - startTime < 3500) {
-      animationFrame = requestAnimationFrame(render);
-    } else {
-      cancelAnimationFrame(animationFrame);
-      if (document.body.contains(canvas)) {
-        document.body.removeChild(canvas);
-      }
-    }
-  }
-
-  render();
+  fire(0.25, {
+    spread: 26,
+    startVelocity: 55,
+    colors: ["#6366f1", "#06b6d4", "#10b981"],
+  });
+  fire(0.2, {
+    spread: 60,
+    colors: ["#f59e0b", "#ec4899", "#8b5cf6"],
+  });
+  fire(0.35, {
+    spread: 100,
+    decay: 0.91,
+    scalar: 0.8,
+  });
+  fire(0.1, {
+    spread: 120,
+    startVelocity: 25,
+    decay: 0.92,
+    scalar: 1.2,
+  });
+  fire(0.1, {
+    spread: 120,
+    startVelocity: 45,
+  });
 }

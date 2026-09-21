@@ -29,12 +29,12 @@ interface Activity {
 }
 
 const activityIcons: Record<string, React.ReactNode> = {
-  project_created: <FolderPlus className="h-4 w-4 text-violet-500" />,
+  project_created: <FolderPlus className="h-4 w-4 text-primary" />,
   task_created: <ListPlus className="h-4 w-4 text-blue-500" />,
   task_completed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
   task_deleted: <Trash2 className="h-4 w-4 text-rose-500" />,
   task_updated: <RefreshCw className="h-4 w-4 text-amber-500" />,
-  comment_added: <MessageSquare className="h-4 w-4 text-purple-500" />,
+  comment_added: <MessageSquare className="h-4 w-4 text-primary" />,
 };
 
 export default function ActivityPage() {
@@ -89,7 +89,7 @@ export default function ActivityPage() {
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function ActivityPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ActivityIcon className="h-7 w-7 text-violet-500" />
+            <ActivityIcon className="h-7 w-7 text-primary" />
             Audit Activity Trail
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -132,7 +132,7 @@ export default function ActivityPage() {
             onClick={() => setTypeFilter(tab.id)}
             className={`px-3.5 py-1.5 rounded-full font-medium transition-all ${
               typeFilter === tab.id
-                ? "bg-violet-600 text-white shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary"
             }`}
           >
@@ -141,7 +141,7 @@ export default function ActivityPage() {
         ))}
       </div>
 
-      <Card className="bg-card/70 border-violet-500/20 shadow-sm">
+      <Card className="bg-card border-border shadow-xs">
         <CardContent className="p-6">
           {filteredActivities.length === 0 ? (
             <div className="text-center py-16 space-y-2">
@@ -157,7 +157,7 @@ export default function ActivityPage() {
               {filteredActivities.map((activity) => (
                 <div key={activity.id} className="relative flex items-start gap-4 group">
                   {/* Icon Node */}
-                  <div className="relative z-10 h-8 w-8 rounded-xl bg-card border shadow-sm flex items-center justify-center group-hover:border-violet-500/50 transition-colors">
+                  <div className="relative z-10 h-8 w-8 rounded-lg bg-card border shadow-xs flex items-center justify-center group-hover:border-primary/50 transition-colors">
                     {activityIcons[activity.type] || <RefreshCw className="h-4 w-4" />}
                   </div>
 

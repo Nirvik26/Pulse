@@ -63,17 +63,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/30 p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <Card className="w-full max-w-md border-violet-500/20 shadow-2xl bg-card/95 backdrop-blur-xl relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <Card className="w-full max-w-md border-border shadow-xl bg-card relative z-10">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <PulseMark className="h-10 w-10" />
           </div>
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription className="text-xs">
-            Start organizing your sprints with AI-powered velocity
+            Start organizing your sprints and team deliverables
           </CardDescription>
         </CardHeader>
 
@@ -118,13 +116,13 @@ export default function RegisterPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-violet-600 hover:bg-violet-700 h-9 text-sm font-semibold"
+              className="w-full h-9 text-sm font-semibold"
               disabled={isLoading}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Create Free Account"
+                "Create Account"
               )}
             </Button>
           </form>
@@ -132,14 +130,14 @@ export default function RegisterPage() {
           <div className="pt-2 border-t text-center space-y-2">
             <p className="text-xs text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-violet-500 font-semibold hover:underline">
+              <Link href="/login" className="text-primary font-semibold hover:underline">
                 Sign in
               </Link>
             </p>
             <p className="text-xs text-muted-foreground">
-              Just reviewing?{" "}
+              Just testing?{" "}
               <Link href="/login" className="text-foreground font-medium hover:underline inline-flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-violet-500" /> Try 1-Click Recruiter Sandbox
+                Try 1-Click Interactive Demo
               </Link>
             </p>
           </div>
