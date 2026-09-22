@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { registerApiSchema } from "@/lib/validations/auth";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, name, password } = body;
+    const result = registerApiSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message || "Validation failed";
       return NextResponse.json(
-        { error: "Email and password are required" },
+        {
+          error: firstError,
+          errors: result.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const { email, name, password } = result.data;
 
     const exist = await prisma.user.findUnique({
       where: { email },
@@ -25,26 +32,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
+    const created = await auth.api.signUpEmail({
+      body: {
         email,
         name,
-        password: hashedPassword,
+        password,
       },
     });
 
     return NextResponse.json({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
+        id: created.user.id,
+        email: created.user.email,
+        name: created.user.name,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error?.message || "Internal Server Error" },
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { createCommentSchema } from "@/lib/validations/comment";
 
 export async function GET(
   req: Request,
@@ -17,7 +17,11 @@ export async function GET(
       where: { taskId: params.id },
       include: {
         user: {
-          select: { id: true, name: true, image: true, email: true },
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
         },
       },
       orderBy: { createdAt: "asc" },
@@ -40,11 +44,19 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { content } = body;
+    const result = createCommentSchema.safeParse(body);
 
-    if (!content || !content.trim()) {
-      return NextResponse.json({ error: "Content is required" }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
+
+    const { content } = result.data;
 
     const task = await prisma.task.findUnique({
       where: { id: params.id },

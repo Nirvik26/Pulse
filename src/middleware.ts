@@ -6,7 +6,10 @@ export function middleware(request: NextRequest) {
 
   const isPublicPath = path === "/" || path === "/login" || path === "/register";
 
-  const token = request.cookies.get("next-auth.session-token")?.value ||
+  const token =
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value ||
+    request.cookies.get("next-auth.session-token")?.value ||
     request.cookies.get("__Secure-next-auth.session-token")?.value;
 
   if (isPublicPath && token) {

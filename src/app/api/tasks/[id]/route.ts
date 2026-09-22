@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { updateTaskSchema } from "@/lib/validations/task";
 
 export async function PATCH(
   req: Request,
@@ -14,7 +14,19 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title, description, status, priority, dueDate } = body;
+    const result = updateTaskSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { title, description, status, priority, dueDate } = result.data;
 
     const existingTask = await prisma.task.findFirst({
       where: { id: params.id, userId: session.user.id },

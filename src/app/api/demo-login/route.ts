@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export async function POST() {
   try {
@@ -9,19 +9,34 @@ export async function POST() {
 
     let user = await prisma.user.findUnique({
       where: { email: demoEmail },
-      include: { projects: { include: { tasks: true } } },
+      include: { projects: { include: { tasks: true } }, accounts: true },
     });
 
-    if (!user) {
-      const hashedPassword = await bcrypt.hash(demoPassword, 10);
-      user = await prisma.user.create({
-        data: {
+    const hasCredentialAccount = user?.accounts.some(
+      (a) => a.providerId === "credential"
+    );
+
+    if (!user || !hasCredentialAccount) {
+      if (user) {
+        await prisma.user.delete({ where: { id: user.id } });
+      }
+
+      await auth.api.signUpEmail({
+        body: {
           email: demoEmail,
+          password: demoPassword,
           name: "Alex Rivera (Demo Guest)",
-          password: hashedPassword,
         },
-        include: { projects: { include: { tasks: true } } },
       });
+
+      user = await prisma.user.findUnique({
+        where: { email: demoEmail },
+        include: { projects: { include: { tasks: true } }, accounts: true },
+      });
+    }
+
+    if (!user) {
+      throw new Error("Failed to initialize demo user");
     }
 
     // Check if demo user needs realistic seed projects

@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { updateProfileSchema } from "@/lib/validations/user";
 
 export async function PATCH(req: Request) {
   try {
@@ -11,7 +11,19 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, image } = body;
+    const result = updateProfileSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, image } = result.data;
 
     const user = await prisma.user.update({
       where: { id: session.user.id },

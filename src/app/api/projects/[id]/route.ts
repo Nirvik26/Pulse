@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { updateProjectSchema } from "@/lib/validations/project";
 
 export async function GET(
   req: Request,
@@ -20,12 +20,17 @@ export async function GET(
       },
       include: {
         tasks: {
-          orderBy: { createdAt: "desc" },
-        },
-        comments: {
           include: {
-            user: {
-              select: { name: true, image: true },
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    image: true,
+                  },
+                },
+              },
             },
           },
           orderBy: { createdAt: "desc" },
@@ -57,7 +62,19 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, description, status, color } = body;
+    const result = updateProjectSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { name, description, status, color } = result.data;
 
     const project = await prisma.project.update({
       where: {

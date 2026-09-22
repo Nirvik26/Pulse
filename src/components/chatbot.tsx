@@ -7,22 +7,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  MessageSquare,
   X,
   Send,
   Bot,
-  User,
-  Sparkles,
   Loader2,
   Maximize2,
   Minimize2,
   RotateCcw,
+  Copy,
+  Check,
+  Sparkles,
   Zap,
-  TrendingUp,
-  ListTodo,
 } from "lucide-react";
-import { VoiceInput } from "./voice-input";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import { useToast } from "@/components/ui/toaster";
 
 interface Message {
   id: string;
@@ -32,26 +30,29 @@ interface Message {
 }
 
 const suggestedPrompts = [
-  { label: "Task Breakdown", prompt: "Break down the feature: User Authentication with 2FA and OAuth" },
-  { label: "Sprint Health", prompt: "Audit our sprint health and workload velocity" },
-  { label: "Daily Standup", prompt: "Generate my daily standup summary based on recent tasks" },
-  { label: "Keyboard Shortcuts", prompt: "Show me keyboard shortcuts and productivity tips" },
+  { label: "🎯 Task Breakdown", prompt: "Break down the feature: User Authentication with 2FA and OAuth" },
+  { label: "📊 Sprint Health", prompt: "Audit our sprint health and workload velocity" },
+  { label: "📋 Daily Standup", prompt: "Generate my daily standup summary based on recent tickets" },
+  { label: "⚡ What Next?", prompt: "What should I focus on next to maximize sprint velocity?" },
+  { label: "⚡ Shortcuts", prompt: "Show me keyboard shortcuts and productivity tips" },
 ];
 
 export function ChatBot() {
   const { isCopilotOpen, setCopilotOpen } = useWorkspaceStore();
+  const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
-        "Hello! I'm your sprint copilot. I can help decompose epics into backlog tasks, audit sprint workload, or draft standup summaries. How can I assist?",
+        "👋 Hello! I'm your **Pulse Sprint Copilot**.\n\nI'm connected to your active workspaces to dynamically decompose features into backlog tasks, audit sprint workload & bottlenecks, or draft your daily standup. What can we tackle today?",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +80,8 @@ export function ChatBot() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedHistory = [...messages, userMessage];
+    setMessages(updatedHistory);
     setInput("");
     setIsLoading(true);
 
@@ -88,7 +90,7 @@ export function ChatBot() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
+          messages: updatedHistory.map((m) => ({
             role: m.role,
             content: m.content,
           })),
@@ -100,7 +102,7 @@ export function ChatBot() {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.message,
+          content: data.message || "I've processed your request.",
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
@@ -110,7 +112,7 @@ export function ChatBot() {
           {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: "⚠️ Unable to reach Pulse AI. Please check your network connection and try again.",
+            content: "⚠️ Unable to reach Pulse Copilot. Please check your connection and try again.",
             timestamp: new Date(),
           },
         ]);
@@ -130,15 +132,121 @@ export function ChatBot() {
     }
   };
 
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast({
+      title: "Copied to clipboard",
+      description: "Copilot response copied.",
+    });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const clearChat = () => {
     setMessages([
       {
         id: Date.now().toString(),
         role: "assistant",
-        content: "Chat reset! How can I assist you with your projects?",
+        content: "✨ Chat reset! What project or task shall we explore next?",
         timestamp: new Date(),
       },
     ]);
+  };
+
+  // Helper to render basic markdown formatting cleanly
+  const renderFormattedContent = (content: string) => {
+    const lines = content.split("\n");
+    return lines.map((line, idx) => {
+      // Headers
+      if (line.startsWith("### ")) {
+        return (
+          <h4 key={idx} className="font-bold text-foreground text-xs mt-2.5 mb-1 flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-primary shrink-0" />
+            {line.replace("### ", "")}
+          </h4>
+        );
+      }
+      if (line.startsWith("## ")) {
+        return (
+          <h3 key={idx} className="font-bold text-foreground text-sm mt-3 mb-1">
+            {line.replace("## ", "")}
+          </h3>
+        );
+      }
+      if (line.startsWith("# ")) {
+        return (
+          <h2 key={idx} className="font-bold text-foreground text-sm mt-3.5 mb-1.5">
+            {line.replace("# ", "")}
+          </h2>
+        );
+      }
+
+      // Horizontal rules
+      if (line.trim() === "---") {
+        return <hr key={idx} className="my-2 border-border/60" />;
+      }
+
+      // Parse inline formatting: **bold** and `code`
+      const formattedLine = parseInlineMarkdown(line);
+
+      // Bullet points
+      if (line.trim().startsWith("• ") || line.trim().startsWith("- ")) {
+        return (
+          <div key={idx} className="pl-2 py-0.5 leading-relaxed text-xs">
+            {formattedLine}
+          </div>
+        );
+      }
+
+      // Empty spacing lines
+      if (!line.trim()) {
+        return <div key={idx} className="h-1.5" />;
+      }
+
+      return (
+        <p key={idx} className="leading-relaxed text-xs">
+          {formattedLine}
+        </p>
+      );
+    });
+  };
+
+  const parseInlineMarkdown = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const regex = /(\*\*.*?\*\*|`.*?`)/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index));
+      }
+
+      const matchText = match[0];
+      if (matchText.startsWith("**") && matchText.endsWith("**")) {
+        parts.push(
+          <strong key={match.index} className="font-semibold text-foreground">
+            {matchText.slice(2, -2)}
+          </strong>
+        );
+      } else if (matchText.startsWith("`") && matchText.endsWith("`")) {
+        parts.push(
+          <code
+            key={match.index}
+            className="px-1 py-0.5 rounded bg-muted font-mono text-[11px] text-primary"
+          >
+            {matchText.slice(1, -1)}
+          </code>
+        );
+      }
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   return (
@@ -152,6 +260,10 @@ export function ChatBot() {
         >
           <Bot className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
           <span className="hidden sm:inline">Copilot</span>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
         </button>
       )}
 
@@ -161,7 +273,7 @@ export function ChatBot() {
           className={`fixed z-50 transition-all duration-300 ease-in-out flex flex-col ${
             isExpanded
               ? "inset-4 md:inset-10 rounded-2xl"
-              : "bottom-5 right-5 w-full max-w-[400px] h-[550px] rounded-2xl"
+              : "bottom-5 right-5 w-full max-w-[420px] h-[580px] rounded-2xl"
           } bg-card border shadow-2xl overflow-hidden`}
         >
           {/* Header */}
@@ -173,8 +285,8 @@ export function ChatBot() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-xs">Sprint Copilot</h3>
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono">
-                    Assistant
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono text-emerald-500 border-emerald-500/30">
+                    Live
                   </Badge>
                 </div>
               </div>
@@ -194,6 +306,7 @@ export function ChatBot() {
                 size="icon"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="h-7 w-7 text-muted-foreground hover:text-foreground hidden md:flex"
+                title={isExpanded ? "Collapse" : "Expand"}
               >
                 {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               </Button>
@@ -214,7 +327,7 @@ export function ChatBot() {
               <button
                 key={idx}
                 onClick={() => sendMessage(p.prompt)}
-                className="shrink-0 px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-[11px] font-medium transition-colors"
+                className="shrink-0 px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-[11px] font-medium transition-colors hover:text-primary"
               >
                 {p.label}
               </button>
@@ -227,34 +340,65 @@ export function ChatBot() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-2.5 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
+                  className={`flex flex-col ${
+                    message.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
-                  {message.role === "assistant" && (
-                    <Avatar className="h-6 w-6 mt-0.5 border shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                        <Bot className="h-3.5 w-3.5" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
                   <div
-                    className={`max-w-[85%] rounded-xl px-3.5 py-2 text-xs leading-relaxed ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary/70 border text-foreground"
+                    className={`flex gap-2.5 w-full ${
+                      message.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    {message.role === "assistant" && (
+                      <Avatar className="h-6 w-6 mt-0.5 border shrink-0">
+                        <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                          <Bot className="h-3.5 w-3.5" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div
-                      className={`text-[9px] mt-1 text-right ${
-                        message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                      className={`max-w-[88%] rounded-xl px-3.5 py-2.5 text-xs relative group ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary/60 border text-foreground"
                       }`}
                     >
-                      {new Date(message.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {message.role === "assistant" ? (
+                        <div className="space-y-1">
+                          {renderFormattedContent(message.content)}
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{message.content}</div>
+                      )}
+
+                      <div className="flex items-center justify-between mt-1 pt-0.5 text-[9px] text-muted-foreground gap-2">
+                        <span>
+                          {new Date(message.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {message.role === "assistant" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(message.id, message.content)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground flex items-center gap-1"
+                            title="Copy response"
+                          >
+                            {copiedId === message.id ? (
+                              <>
+                                <Check className="h-3 w-3 text-emerald-500" />
+                                <span className="text-emerald-500">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -263,9 +407,9 @@ export function ChatBot() {
               {isLoading && (
                 <div className="flex gap-2.5 items-center text-muted-foreground text-xs py-1">
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   </div>
-                  <span>Thinking...</span>
+                  <span className="animate-pulse">Synthesizing workspace intelligence...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -284,7 +428,7 @@ export function ChatBot() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Copilot..."
+              placeholder="Ask Copilot (e.g. 'Decompose billing feature', 'Audit sprint')..."
               className="flex-1 text-xs h-8 bg-background"
               disabled={isLoading}
             />
@@ -292,7 +436,7 @@ export function ChatBot() {
               type="submit"
               size="icon"
               disabled={!input.trim() || isLoading}
-              className="h-8 w-8 rounded-lg shrink-0 text-xs"
+              className="h-8 w-8 rounded-lg shrink-0 text-xs shadow-xs"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>

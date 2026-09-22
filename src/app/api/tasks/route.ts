@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { createTaskSchema } from "@/lib/validations/task";
 
 export async function GET(req: Request) {
   try {
@@ -22,7 +22,22 @@ export async function GET(req: Request) {
       },
       include: {
         project: {
-          select: { id: true, name: true, color: true },
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -42,7 +57,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, priority, dueDate, projectId, status } = body;
+    const result = createTaskSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { title, description, priority, dueDate, projectId, status } = result.data;
 
     const task = await prisma.task.create({
       data: {

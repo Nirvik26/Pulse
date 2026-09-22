@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,10 +31,9 @@ export default function Home() {
       const res = await fetch("/api/demo-login", { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        await signIn("credentials", {
+        await authClient.signIn.email({
           email: data.email,
           password: data.password,
-          redirect: false,
         });
         router.push("/dashboard");
         router.refresh();

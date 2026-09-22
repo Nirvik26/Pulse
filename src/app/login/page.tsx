@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, LoginInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,31 +19,41 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toaster";
 import { PulseMark } from "@/components/pulse-mark";
-import { Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onTouched",
+  });
+
+  const onSubmit = async (values: LoginInput) => {
     setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const { error } = await authClient.signIn.email({
+        email: values.email,
+        password: values.password,
       });
 
-      if (result?.error) {
+      if (error) {
         toast({
           title: "Invalid Credentials",
-          description: "Please check your email and password.",
+          description: error.message || "Please check your email and password.",
           variant: "destructive",
         });
         return;
@@ -65,13 +78,12 @@ export default function LoginPage() {
       const res = await fetch("/api/demo-login", { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        const result = await signIn("credentials", {
+        const result = await authClient.signIn.email({
           email: data.email,
           password: data.password,
-          redirect: false,
         });
 
-        if (result?.ok) {
+        if (!result.error) {
           toast({
             title: "Sandbox Mode Activated",
             description: "Loaded realistic projects and tasks for demo exploration!",
@@ -146,31 +158,65 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs">Email Address</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="email" className="text-xs">Email Address</Label>
+                {errors.email && (
+                  <span className="text-[11px] text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.email.message}
+                  </span>
+                )}
+              </div>
               <Input
                 id="email"
                 type="email"
                 placeholder="engineer@pulse.io"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-9 text-sm"
+                autoComplete="email"
+                {...register("email")}
+                className={`h-9 text-sm ${
+                  errors.email ? "border-destructive focus-visible:ring-destructive" : ""
+                }`}
               />
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-9 text-sm"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-xs">Password</Label>
+                {errors.password && (
+                  <span className="text-[11px] text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.password.message}
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  {...register("password")}
+                  className={`h-9 text-sm pr-9 ${
+                    errors.password ? "border-destructive focus-visible:ring-destructive" : ""
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
+
             <Button
               type="submit"
               className="w-full h-9 text-sm font-semibold"

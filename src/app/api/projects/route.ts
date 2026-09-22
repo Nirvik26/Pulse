@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession, authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { createProjectSchema } from "@/lib/validations/project";
 
 export async function GET() {
   try {
@@ -34,13 +34,26 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, description, color } = body;
+    const result = createProjectSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error.errors[0]?.message || "Validation failed",
+          errors: result.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { name, description, color, status } = result.data;
 
     const project = await prisma.project.create({
       data: {
         name,
         description,
         color,
+        status,
         userId: session.user.id,
       },
     });
