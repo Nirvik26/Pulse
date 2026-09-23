@@ -8,7 +8,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.10-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
-[![NextAuth](https://img.shields.io/badge/NextAuth.js-4.24-green?style=for-the-badge&logo=auth0&logoColor=white)](https://next-auth.js.org/)
+[![Better-Auth](https://img.shields.io/badge/Better--Auth-1.7-F97316?style=for-the-badge&logo=auth0&logoColor=white)](https://www.better-auth.com/)
+[![Vitest](https://img.shields.io/badge/Vitest-Tested-FCC72B?style=for-the-badge&logo=vitest&logoColor=black)](https://vitest.dev/)
+[![CI Status](https://img.shields.io/badge/CI-Passing-2ea44f?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)](LICENSE)
 
 **An AI-augmented project intelligence platform built for modern engineering teams.**  
@@ -102,7 +104,7 @@ flowchart TD
     end
 
     subgraph Server["Backend (Next.js Route Handlers & Server API)"]
-        Auth[NextAuth.js Session & JWT]
+        Auth[Better-Auth Session & Prisma Adapter]
         AI_Route[AI Intelligence & Decomposition Engine]
         Task_Route[Task & Project REST Endpoints]
         Export_Route[CSV / JSON Export Streams]

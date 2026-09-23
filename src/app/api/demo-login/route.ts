@@ -142,6 +142,19 @@ export async function POST() {
         ],
       });
 
+      const firstTask = await prisma.task.findFirst({
+        where: { userId: user.id, projectId: project1.id },
+      });
+      if (firstTask) {
+        await prisma.subtask.createMany({
+          data: [
+            { title: "Define hotkey event listener for Mac (⌘K) and Windows (Ctrl+K)", completed: true, taskId: firstTask.id },
+            { title: "Implement spotlight modal fuzzy search index", completed: true, taskId: firstTask.id },
+            { title: "Add keyboard arrow key traversal with visual indicator", completed: true, taskId: firstTask.id },
+          ],
+        });
+      }
+
       // Seed Tasks for Project 2
       await prisma.task.createMany({
         data: [

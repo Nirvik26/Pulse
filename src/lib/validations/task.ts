@@ -6,9 +6,9 @@ export const taskPriorityEnum = z.enum(["low", "medium", "high"]);
 export const createTaskSchema = z.object({
   title: z
     .string()
+    .trim()
     .min(1, "Task title is required")
-    .max(150, "Task title cannot exceed 150 characters")
-    .trim(),
+    .max(150, "Task title cannot exceed 150 characters"),
   description: z
     .string()
     .max(2000, "Description cannot exceed 2000 characters")
@@ -28,9 +28,9 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export const updateTaskSchema = z.object({
   title: z
     .string()
+    .trim()
     .min(1, "Task title cannot be empty")
     .max(150, "Task title cannot exceed 150 characters")
-    .trim()
     .optional(),
   description: z
     .string()

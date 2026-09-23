@@ -96,6 +96,18 @@ model Task {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   comments Comment[]
   activities Activity[]
+  subtasks Subtask[]
+}
+
+model Subtask {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  taskId    String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Comment {

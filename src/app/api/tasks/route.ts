@@ -28,6 +28,9 @@ export async function GET(req: Request) {
             color: true,
           },
         },
+        subtasks: {
+          orderBy: { createdAt: "asc" },
+        },
         comments: {
           include: {
             user: {

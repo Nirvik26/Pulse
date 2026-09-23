@@ -21,6 +21,9 @@ export async function GET(
       include: {
         tasks: {
           include: {
+            subtasks: {
+              orderBy: { createdAt: "asc" },
+            },
             comments: {
               include: {
                 user: {

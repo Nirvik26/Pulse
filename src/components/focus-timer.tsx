@@ -87,26 +87,6 @@ export function FocusTimer() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (isRunning) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleTimerComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isRunning, mode]);
-
   const playBeep = () => {
     if (!soundEnabled || typeof window === "undefined") return;
     try {
@@ -138,6 +118,29 @@ export function FocusTimer() {
       switchMode("focus");
     }
   };
+
+  const handleTimerCompleteRef = useRef(handleTimerComplete);
+  handleTimerCompleteRef.current = handleTimerComplete;
+
+  useEffect(() => {
+    if (isRunning) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            handleTimerCompleteRef.current();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isRunning]);
 
   const switchMode = (newMode: "focus" | "shortBreak" | "longBreak") => {
     setIsRunning(false);

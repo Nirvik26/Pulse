@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +62,6 @@ interface Project {
 export default function ProjectsPage() {
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -78,8 +77,19 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
-  useEffect(() => {
-    filterProjects();
+  const filteredProjects = useMemo(() => {
+    let filtered = projects;
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === statusFilter);
+    }
+    return filtered;
   }, [projects, searchQuery, statusFilter]);
 
   const fetchProjects = async () => {
@@ -94,21 +104,6 @@ export default function ProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const filterProjects = () => {
-    let filtered = projects;
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((p) => p.status === statusFilter);
-    }
-    setFilteredProjects(filtered);
   };
 
   const createProject = async () => {

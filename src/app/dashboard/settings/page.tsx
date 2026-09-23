@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import NextImage from 'next/image';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -668,9 +669,12 @@ export default function SettingsPage() {
             {uploadPreview ? (
               <div className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-primary/40 bg-primary/5 gap-3.5">
                 <div className="relative group">
-                  <img
+                  <NextImage
                     src={uploadPreview}
                     alt="Preview"
+                    width={112}
+                    height={112}
+                    unoptimized
                     className="h-28 w-28 rounded-full object-cover border-4 border-background shadow-lg ring-2 ring-primary/40"
                   />
                   <button

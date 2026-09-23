@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -78,29 +78,7 @@ export function TaskDetailModal({
   const [subtasks, setSubtasks] = useState<Array<{ id: string; text: string; done: boolean }>>([]);
   const [newSubtaskText, setNewSubtaskText] = useState("");
 
-  useEffect(() => {
-    if (task && isOpen) {
-      setEditTitle(task.title);
-      setEditDesc(task.description || "");
-      setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "");
-      setEditPriority(task.priority || "medium");
-      setIsEditingContent(false);
-      fetchComments();
-
-      // Load subtasks via Zustand store
-      const loaded = getSubtasks(task.id);
-      setSubtasks(loaded);
-    }
-  }, [task, isOpen]);
-
-  const saveSubtasks = (updated: Array<{ id: string; text: string; done: boolean }>) => {
-    setSubtasks(updated);
-    if (task) {
-      storeSetSubtasks(task.id, updated);
-    }
-  };
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!task) return;
     try {
       const res = await fetch(`/api/tasks/${task.id}/comments`);
@@ -110,6 +88,49 @@ export function TaskDetailModal({
       }
     } catch (e) {
       // Fallback
+    }
+  }, [task]);
+
+  const fetchSubtasks = useCallback(async () => {
+    if (!task) return;
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/subtasks`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const mapped = data.map((s: any) => ({
+            id: s.id,
+            text: s.title,
+            done: s.completed,
+          }));
+          setSubtasks(mapped);
+          storeSetSubtasks(task.id, mapped);
+          return;
+        }
+      }
+    } catch (e) {
+      // Fallback to local store
+    }
+    const loaded = getSubtasks(task.id);
+    setSubtasks(loaded);
+  }, [task, getSubtasks, storeSetSubtasks]);
+
+  useEffect(() => {
+    if (task && isOpen) {
+      setEditTitle(task.title);
+      setEditDesc(task.description || "");
+      setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "");
+      setEditPriority(task.priority || "medium");
+      setIsEditingContent(false);
+      fetchComments();
+      fetchSubtasks();
+    }
+  }, [task, isOpen, fetchComments, fetchSubtasks]);
+
+  const saveSubtasks = (updated: Array<{ id: string; text: string; done: boolean }>) => {
+    setSubtasks(updated);
+    if (task) {
+      storeSetSubtasks(task.id, updated);
     }
   };
 
@@ -226,29 +247,78 @@ export function TaskDetailModal({
     }
   };
 
-  const toggleSubtask = (id: string) => {
-    const updated = subtasks.map((s) => (s.id === id ? { ...s, done: !s.done } : s));
+  const toggleSubtask = async (id: string) => {
+    const target = subtasks.find((s) => s.id === id);
+    if (!target) return;
+    const nextDone = !target.done;
+
+    const updated = subtasks.map((s) => (s.id === id ? { ...s, done: nextDone } : s));
     const allDone = updated.length > 0 && updated.every((s) => s.done);
     if (allDone) {
       fireConfetti();
     }
     saveSubtasks(updated);
+
+    if (task) {
+      try {
+        await fetch(`/api/tasks/${task.id}/subtasks`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subtaskId: id, completed: nextDone }),
+        });
+        onTaskUpdated();
+      } catch (err) {
+        console.error("Failed to sync subtask toggle:", err);
+      }
+    }
   };
 
-  const addSubtask = (e: React.FormEvent) => {
+  const addSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubtaskText.trim()) return;
-    const updated = [
-      ...subtasks,
-      { id: Date.now().toString(), text: newSubtaskText.trim(), done: false },
-    ];
-    saveSubtasks(updated);
+    if (!newSubtaskText.trim() || !task) return;
+    const title = newSubtaskText.trim();
     setNewSubtaskText("");
+
+    const tempId = `temp_${Date.now()}`;
+    const optimistic = [
+      ...subtasks,
+      { id: tempId, text: title, done: false },
+    ];
+    saveSubtasks(optimistic);
+
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/subtasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        const synchronized = optimistic.map((s) =>
+          s.id === tempId ? { id: created.id, text: created.title, done: created.completed } : s
+        );
+        saveSubtasks(synchronized);
+        onTaskUpdated();
+      }
+    } catch (err) {
+      console.error("Failed to persist subtask:", err);
+    }
   };
 
-  const deleteSubtask = (id: string) => {
+  const deleteSubtask = async (id: string) => {
     const updated = subtasks.filter((s) => s.id !== id);
     saveSubtasks(updated);
+
+    if (task) {
+      try {
+        await fetch(`/api/tasks/${task.id}/subtasks?subtaskId=${id}`, {
+          method: "DELETE",
+        });
+        onTaskUpdated();
+      } catch (err) {
+        console.error("Failed to delete subtask on server:", err);
+      }
+    }
   };
 
   const completedSubtasks = subtasks.filter((s) => s.done).length;

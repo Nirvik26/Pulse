@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -80,155 +80,15 @@ import {
 } from "lucide-react";
 import { fireConfetti } from "@/components/confetti";
 import { TaskDetailModal } from "@/components/task-detail-modal";
+import { SortableTaskCard } from "@/components/kanban/sortable-task-card";
+import { KanbanColumn, type ColumnDefinition } from "@/components/kanban/kanban-column";
 import type { Task, Project } from "@/types";
 
-interface Column {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  color: string;
-  bg: string;
-}
-
-const columns: Column[] = [
+const columns: ColumnDefinition[] = [
   { id: "todo", title: "To Do", icon: <Circle className="h-4 w-4" />, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-500/10" },
   { id: "in-progress", title: "In Progress", icon: <Clock className="h-4 w-4" />, color: "text-amber-500", bg: "bg-amber-500/10" },
   { id: "done", title: "Done", icon: <CheckCircle2 className="h-4 w-4" />, color: "text-emerald-500", bg: "bg-emerald-500/10" },
 ];
-
-function SortableTaskCard({
-  task,
-  onDelete,
-  onEdit,
-  onOpenDetail,
-  onDuplicate,
-}: {
-  task: Task;
-  onDelete: (id: string) => void;
-  onEdit: (task: Task) => void;
-  onOpenDetail: (task: Task) => void;
-  onDuplicate?: (task: Task) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/25">High</Badge>;
-      case "medium":
-        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25">Medium</Badge>;
-      case "low":
-        return <Badge variant="secondary" className="text-[10px] uppercase font-mono px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">Low</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const priorityBorder =
-    task.priority === "high"
-      ? "border-l-[3px] border-l-rose-500"
-      : task.priority === "medium"
-      ? "border-l-[3px] border-l-amber-500"
-      : "border-l-[3px] border-l-emerald-500";
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group relative rounded-xl border bg-card p-3.5 shadow-xs transition-all hover:shadow-sm hover:border-primary/40 ${priorityBorder} ${
-        isDragging ? "opacity-40 ring-2 ring-primary" : ""
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground mt-0.5"
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <div
-            className="flex-1 min-w-0 cursor-pointer"
-            onClick={() => onOpenDetail(task)}
-          >
-            <h4 className="font-semibold text-sm leading-snug break-words text-foreground group-hover:text-primary transition-colors">
-              {task.title}
-            </h4>
-            {task.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                {task.description}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          {onDuplicate && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDuplicate(task);
-              }}
-              title="Duplicate task"
-            >
-              <Copy className="h-3.5 w-3.5 shrink-0" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(task);
-            }}
-            title="Edit task"
-          >
-            <Edit className="h-3.5 w-3.5 shrink-0" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(task.id);
-            }}
-            title="Delete task"
-          >
-            <Trash2 className="h-3.5 w-3.5 shrink-0" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mt-3 pt-2.5 border-t text-[11px] text-muted-foreground">
-        <div>{getPriorityBadge(task.priority)}</div>
-        {task.dueDate && (
-          <div className="flex items-center gap-1 text-[11px]">
-            <Calendar className="h-3 w-3" />
-            <span>{new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -287,9 +147,32 @@ export default function ProjectDetailsPage() {
   });
   const [isSavingProject, setIsSavingProject] = useState(false);
 
+  const fetchProject = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/projects/${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setProject(data);
+        setProjectForm({
+          name: data.name,
+          description: data.description || "",
+          color: data.color || "#3b82f6",
+          status: data.status || "active",
+        });
+      } else {
+        toast({ title: "Error", description: "Project not found", variant: "destructive" });
+        router.push("/dashboard/projects");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to load project", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params.id, router, toast]);
+
   useEffect(() => {
     fetchProject();
-  }, [params.id]);
+  }, [fetchProject]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -319,29 +202,6 @@ export default function ProjectDetailsPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTaskDialogOpen, isProjectSettingsOpen, isDeleteProjectOpen, selectedDetailTask]);
-
-  const fetchProject = async () => {
-    try {
-      const res = await fetch(`/api/projects/${params.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProject(data);
-        setProjectForm({
-          name: data.name,
-          description: data.description || "",
-          color: data.color || "#3b82f6",
-          status: data.status || "active",
-        });
-      } else {
-        toast({ title: "Error", description: "Project not found", variant: "destructive" });
-        router.push("/dashboard/projects");
-      }
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to load project", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const updateProjectDetails = async () => {
     if (!projectForm.name.trim()) return;
@@ -723,64 +583,28 @@ export default function ProjectDetailsPage() {
             const columnTasks = filteredTasks.filter((t) => t.status === column.id);
 
             return (
-              <div
+              <KanbanColumn
                 key={column.id}
-                id={column.id}
-                className="flex flex-col rounded-2xl border bg-secondary/30 p-4 min-h-[500px]"
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-3 border-b mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${column.bg} ${column.color}`}>
-                      {column.icon}
-                    </div>
-                    <span className="font-semibold text-sm">{column.title}</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
-                    {columnTasks.length}
-                  </Badge>
-                </div>
-
-                {/* Sortable Tasks List */}
-                <SortableContext
-                  items={columnTasks.map((t) => t.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="flex-1 space-y-3">
-                    {columnTasks.length === 0 ? (
-                      <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-border/80 rounded-xl text-xs text-muted-foreground p-4 text-center">
-                        <span>No tasks in {column.title}</span>
-                      </div>
-                    ) : (
-                      columnTasks.map((task) => (
-                        <SortableTaskCard
-                          key={task.id}
-                          task={task}
-                          onDelete={deleteTask}
-                          onEdit={openEditDialog}
-                          onOpenDetail={(t) => setSelectedDetailTask(t)}
-                          onDuplicate={duplicateTask}
-                        />
-                      ))
-                    )}
-                  </div>
-                </SortableContext>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setEditingTask(null);
-                    setNewTask({ title: "", description: "", priority: "medium", dueDate: "", status: column.id });
-                    setCreationSubtasks([]);
-                    setNewSubtaskInput("");
-                    setIsTaskDialogOpen(true);
-                  }}
-                  className="mt-3 w-full h-8 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-primary/50 justify-center gap-1.5"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Task
-                </Button>
-              </div>
+                column={column}
+                tasks={columnTasks}
+                onDeleteTask={deleteTask}
+                onEditTask={openEditDialog}
+                onOpenDetail={(t) => setSelectedDetailTask(t)}
+                onDuplicateTask={duplicateTask}
+                onAddTask={(columnId) => {
+                  setEditingTask(null);
+                  setNewTask({
+                    title: "",
+                    description: "",
+                    priority: "medium",
+                    dueDate: "",
+                    status: columnId,
+                  });
+                  setCreationSubtasks([]);
+                  setNewSubtaskInput("");
+                  setIsTaskDialogOpen(true);
+                }}
+              />
             );
           })}
         </div>
